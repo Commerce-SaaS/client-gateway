@@ -1,9 +1,10 @@
-import { Catch, ArgumentsHost, ExceptionFilter } from '@nestjs/common';
+import { Catch, ArgumentsHost, ExceptionFilter, Logger } from '@nestjs/common';
 
 import { RpcException } from '@nestjs/microservices';
 
 @Catch(RpcException)
 export class RpcCustomExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(RpcCustomExceptionFilter.name);
   catch(exception: RpcException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
@@ -12,7 +13,7 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
 
     if ( rpcError.toString().includes('Empty response') ) {
       return response.status(500).json({
-        status: 500,
+        statusCode: 500,
         message: rpcError.toString().substring(0, rpcError.toString().indexOf('(') - 1)
       })
     }
@@ -21,16 +22,16 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
 
     if (
       typeof rpcError === 'object' &&
-      'status' in rpcError &&
+      'statusCode' in rpcError &&
       'message' in rpcError
     ) {
-      const { status, message } = rpcError as { status: number | string, message: string };
-      const httpStatus = isNaN(+status) ? 400 : +status;
-      return response.status(httpStatus).json({ status: httpStatus, message });
+      const { statusCode, message } = rpcError as { statusCode: number | string, message: string };
+      const httpStatus = isNaN(+statusCode) ? 400 : +statusCode;
+      return response.status(httpStatus).json({ statusCode: httpStatus, message });
     }
 
     response.status(400).json({
-      status: 400,
+      statusCode: 400,
       message: rpcError,
     });
   }

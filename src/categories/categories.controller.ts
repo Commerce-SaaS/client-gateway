@@ -10,8 +10,9 @@ export class CategoriesController {
   constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
-  async create(@Body() createCategoryDto: CreateCategoryDto) {
+  create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.client.send("createCategory", createCategoryDto).pipe(
+      
       catchError(err => {
         console.error('Error creating category:', err);
         throw new RpcException(err);
