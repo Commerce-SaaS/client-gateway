@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ExtrasService } from './extras.service';
 import { ExtrasController } from './extras.controller';
+import { NatsModule } from 'src/transports/nats.module';
 
 @Module({
   controllers: [ExtrasController],
-  providers: [ExtrasService],
+  imports: [NatsModule],
 })
 export class ExtrasModule {}
