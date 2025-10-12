@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
-import { NATS_SERVICE } from 'src/config';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
+import { PRODUCTS_SERVICE } from 'src/config/services';
 
 @Controller('tags')
 export class TagsController {
-  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(@Inject(PRODUCTS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
   create(@Body() createTagDto) {

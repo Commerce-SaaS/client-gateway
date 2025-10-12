@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TagsController } from './tags.controller';
-import { envs } from 'src/config';
+import { ProductIngredientsController } from './product-ingredients.controller';
 import { RabbitMQModule } from 'src/transports/rabbitmq.module';
+import { envs } from 'src/config';
 
 @Module({
-  controllers: [TagsController],
+  controllers: [ProductIngredientsController],
   providers: [],
   imports: [RabbitMQModule.register('PRODUCTS_SERVICE', 'products_queue', envs.rabbitmqUrl)],
 })
-export class TagsModule {}
+export class ProductIngredientsModule {}

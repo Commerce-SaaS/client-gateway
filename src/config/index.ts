@@ -1,2 +1,2 @@
 export { envs } from "./envs";
-export { NATS_SERVICE } from "./services";
+export { RMQ_SERVICE, PRODUCTS_SERVICE, AUTH_SERVICE } from "./services";

@@ -1,1 +1,3 @@
-export const NATS_SERVICE = 'NATS_SERVICE';
+export const RMQ_SERVICE = 'RMQ_SERVICE';
+export const AUTH_SERVICE = 'AUTH_SERVICE';
+export const PRODUCTS_SERVICE = 'PRODUCTS_SERVICE';
