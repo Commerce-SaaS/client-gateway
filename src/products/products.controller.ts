@@ -4,8 +4,11 @@ import {
   Delete,
   Get,
   Inject,
+  Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ClientProxy,
@@ -15,12 +18,15 @@ import {
 } from '@nestjs/microservices';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { NATS_SERVICE } from 'src/config';
+import { PRODUCTS_SERVICE } from 'src/config';
 import { catchError } from 'rxjs';
+import { AuthGuard } from 'src/user/guards/auth.guard';
+import { User } from 'src/user/decorators/user.decorator';
+import { CurrentUser } from 'src/user/interfaces/current-user.interface';
 
 @Controller('products')
 export class ProductsController {
-  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(@Inject(PRODUCTS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
   async createProduct(@Body() createProductDto: CreateProductDto) {
@@ -32,23 +38,26 @@ export class ProductsController {
     );
   }
 
+  @UseGuards(AuthGuard)
   @Get()
-  findAll() {
+  findAll(@User() user: CurrentUser) {
+    console.log(user);
     return this.client.send('findAllProducts', {});
   }
 
   @Get(':id')
-  findOne(@Payload() id: number) {
-    return this.client.send({}, id);
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    console.log('Finding product with ID:', id);
+    return this.client.send("findOneProduct", id);
   }
 
-  @Delete(':id')
-  update(@Payload() updateProductDto: UpdateProductDto) {
-    return this.client.send(updateProductDto.id, updateProductDto);
-  }
+  // @Delete(':id')
+  // update(@Payload() updateProductDto: UpdateProductDto) {
+  //   return this.client.send(updateProductDto.id, updateProductDto);
+  // }
 
-  @Patch(':id')
-  remove(@Payload() id: number) {
-    return this.client.send('', id);
-  }
+  // @Patch(':id')
+  // remove(@Payload() id: number) {
+  //   return this.client.send('', id);
+  // }
 }

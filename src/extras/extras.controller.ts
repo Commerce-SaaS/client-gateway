@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
 import { CreateExtraDto } from './dto/create-extra.dto';
 import { UpdateExtraDto } from './dto/update-extra.dto';
-import { NATS_SERVICE } from 'src/config';
+import { PRODUCTS_SERVICE } from 'src/config';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('extras')
 export class ExtrasController {
   constructor(
-    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
+    @Inject(PRODUCTS_SERVICE) private readonly client: ClientProxy,
   ) {}
 
   @Post()

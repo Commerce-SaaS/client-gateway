@@ -3,11 +3,11 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError, tap } from 'rxjs';
-import { NATS_SERVICE } from 'src/config';
+import { PRODUCTS_SERVICE } from 'src/config';
 
 @Controller('categories')
 export class CategoriesController {
-  constructor(@Inject(NATS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(@Inject(PRODUCTS_SERVICE) private readonly client: ClientProxy) {}
 
   @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
