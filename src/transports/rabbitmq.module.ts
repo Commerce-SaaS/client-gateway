@@ -1,7 +1,8 @@
 // rabbitmq.module.ts
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Global, Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
+@Global()
 @Module({})
 export class RabbitMQModule {
   static register(name: string, queue: string, url: string): DynamicModule {
