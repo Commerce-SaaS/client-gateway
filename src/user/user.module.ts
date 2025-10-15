@@ -15,7 +15,6 @@ import { UserService } from './user.service';
       secret: envs.accessTokensecret,
       signOptions: { expiresIn: '15m' },
     }),
-    RabbitMQModule.register('AUTH_SERVICE', 'auth_queue', envs.rabbitmqUrl),
   ],
 })
 export class UserModule {}

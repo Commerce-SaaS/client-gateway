@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { RabbitMQModule } from './transports/rabbitmq.module';
 import { envs } from './config';
 import { RedisModule } from './redis/redis.module';
+import { OrganizationModule } from './organization/organization.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RedisModule } from './redis/redis.module';
     RabbitMQModule.register('AUTH_SERVICE', 'auth_queue', envs.rabbitmqUrl),
     RabbitMQModule.register('PRODUCTS_SERVICE', 'products_queue', envs.rabbitmqUrl),
     RedisModule,
+    OrganizationModule,
   ],
 })
 export class AppModule {}
