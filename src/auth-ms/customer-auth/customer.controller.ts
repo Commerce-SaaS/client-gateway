@@ -23,8 +23,7 @@ import { UpdateUserDto } from '../shared/dto/update-user.dto';
 import { CustomerService } from './customer.service';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { ApiRegisterCustomer } from './decorators/api-register-customer.decorator';
-
-
+import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
 
 /**
  * Customer Authentication Controller
@@ -35,7 +34,7 @@ import { ApiRegisterCustomer } from './decorators/api-register-customer.decorato
  * ⚠ This controller does NOT handle SaaS platform users
  * (organization owners, staff, admins).
  * SaaS user authentication is implemented separately under:
- * /auth-ms/saas
+ * /auth-ms/saas-auth
  *
  * Domain boundary:
  * - This module belongs to the Customer Identity domain.
@@ -90,7 +89,10 @@ export class CustomerController {
   @UseGuards(AuthSessionGuard)
   @Patch('me')
   @ApiUpdateMe()
-  updateProfile(@User() user: CurrentUserContext, @Body() updateUserDto: UpdateUserDto) {
+  updateProfile(
+    @User() user: CurrentUserContext,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.customerService.updateProfile(user.id, updateUserDto);
   }
 
@@ -112,9 +114,7 @@ export class CustomerController {
 
   @Post('reset-password')
   @ApiResetPassword()
-  resetPassword(
-    @Body() dto: ResetPasswordDto
-  ) {
+  resetPassword(@Body() dto: ResetPasswordDto) {
     return this.customerService.resetPassword(dto);
   }
 
@@ -125,9 +125,38 @@ export class CustomerController {
     return this.customerService.deleteAcount(user.id);
   }
 
+  // @Delete('me')
+  // @ApiDeleteMe()
+  // delete(@Body() dto: any) {
+  //   return this.customerService.delete(dto);
+  // }
+
   @Patch('me/restore')
   @ApiReactivateMe()
   restoreUser(@Body() loginDto: LoginDto) {
     return this.customerService.restoreAcount(loginDto);
   }
+
+  // @Patch('email')
+  // @ApiReactivateMe()
+  // updateEmail(@Body() dto: any) {
+  //   return this.customerService.updateEmail(dto);
+  // }
+
+  // @Patch('email/verify')
+  // @ApiReactivateMe()
+  // verifyEmail(@Body() dto: any) {
+  //   return this.customerService.verifyEmail(loginDto);
+  // }
+
+  // @Patch('email/resend-verification')
+  // @ApiReactivateMe()
+  // resendVerificationEmail(@Body() dto: any) {
+  //   return this.customerService.resendVerificationEmail(loginDto);
+  // }
+
+    @Post('oauth/google')
+    googleLogin(@Body() dto: GoogleAuthDto) {
+      return this.customerService.googleLogin(dto);
+    }
 }

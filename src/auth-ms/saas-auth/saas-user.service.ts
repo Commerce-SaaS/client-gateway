@@ -12,6 +12,7 @@ import { ForgotPasswordDto } from '../shared/dto/forgot-password.dto';
 import { ResetPasswordDto } from '../shared/dto/reset-password.dto';
 import { SAAS_AUTH_PATTERNS } from './patterns/saas-auth.patterns';
 import { SAAS_USER_PATTERNS } from './patterns/saas-user.patterns';
+import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
 
 @Injectable()
 export class SaaSUserService {
@@ -26,12 +27,16 @@ export class SaaSUserService {
     return firstValueFrom(this.client.send(SAAS_AUTH_PATTERNS.LOGIN, loginDto));
   }
   logout(token: string) {
-    return firstValueFrom(this.client.send(SESSION_PATTERNS.SAAS_LOGOUT, token));
+    return firstValueFrom(
+      this.client.send(SESSION_PATTERNS.SAAS_LOGOUT, token),
+    );
   }
   logoutAll(id: string) {
-    return firstValueFrom(this.client.send(SESSION_PATTERNS.SAAS_LOGOUT_ALL, id));
+    return firstValueFrom(
+      this.client.send(SESSION_PATTERNS.SAAS_LOGOUT_ALL, id),
+    );
   }
-  
+
   refreshToken(refreshTokenDto: RefreshTokenDto) {
     const { refreshToken } = refreshTokenDto;
     return firstValueFrom(
@@ -73,13 +78,17 @@ export class SaaSUserService {
   }
 
   deleteAcount(userId: string) {
-    return firstValueFrom(
-      this.client.send(SAAS_USER_PATTERNS.DELETE, userId),
-    );
+    return firstValueFrom(this.client.send(SAAS_USER_PATTERNS.DELETE, userId));
   }
   restoreAcount(loginDto: LoginDto) {
     return firstValueFrom(
       this.client.send(SAAS_USER_PATTERNS.RESTORE, loginDto),
+    );
+  }
+
+  googleLogin(dto: GoogleAuthDto) {
+    return firstValueFrom(
+      this.client.send(SAAS_AUTH_PATTERNS.GOOGLE_AUTH, dto),
     );
   }
 }

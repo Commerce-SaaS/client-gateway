@@ -11,7 +11,7 @@ import { ApiRegisterUser } from '../shared/decorators/api-register-user.decorato
 import { ApiLoginUser } from '../shared/decorators/api-login-user.decorator';
 import { ApiLogoutUser } from '../shared/decorators/api-logout-user.decorator';
 import { ApiLogoutAllUsers } from '../shared/decorators/api-logout-all-users.decorator';
-import { ApiRefreshToken } from '../shared/decorators/api-refresh-token.decorator'; 
+import { ApiRefreshToken } from '../shared/decorators/api-refresh-token.decorator';
 import { CurrentUserContext } from 'src/common/interfaces/current-user-context.type';
 import { RefreshTokenDto } from '../shared/dto/refresh-token.dto';
 import { ApiGetMe } from '../shared/decorators/api-get-user.decorator';
@@ -24,7 +24,7 @@ import { ApiResetPassword } from '../shared/decorators/api-reset-password.decora
 import { ApiDeactivateMe } from '../shared/decorators/api-deactivate-me.decorator';
 import { ApiReactivateMe } from '../shared/decorators/api-reactivate-me.decorator';
 import { SaaSUserService } from './saas-user.service';
-
+import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
 
 /**
  * SaaS User Authentication Controller
@@ -87,7 +87,10 @@ export class SaaSUserController {
   @UseGuards(AuthSessionGuard)
   @Patch('me')
   @ApiUpdateMe()
-  updateProfile(@User() user: CurrentUserContext, @Body() updateUserDto: UpdateUserDto) {
+  updateProfile(
+    @User() user: CurrentUserContext,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     return this.saaSUserService.updateProfile(user.id, updateUserDto);
   }
 
@@ -109,9 +112,7 @@ export class SaaSUserController {
 
   @Post('reset-password')
   @ApiResetPassword()
-  resetPassword(
-    @Body() dto: ResetPasswordDto
-  ) {
+  resetPassword(@Body() dto: ResetPasswordDto) {
     return this.saaSUserService.resetPassword(dto);
   }
 
@@ -122,9 +123,38 @@ export class SaaSUserController {
     return this.saaSUserService.deleteAcount(user.id);
   }
 
+  // @Delete('me')
+  // @ApiDeleteMe()
+  // delete(@Body() dto: any) {
+  //   return this.customerService.delete(dto);
+  // }
+
   @Patch('me/restore')
   @ApiReactivateMe()
   restoreUser(@Body() loginDto: LoginDto) {
     return this.saaSUserService.restoreAcount(loginDto);
+  }
+
+  // @Patch('email')
+  // @ApiReactivateMe()
+  // updateEmail(@Body() dto: any) {
+  //   return this.customerService.updateEmail(dto);
+  // }
+
+  // @Patch('email/verify')
+  // @ApiReactivateMe()
+  // verifyEmail(@Body() dto: any) {
+  //   return this.customerService.verifyEmail(loginDto);
+  // }
+
+  // @Patch('email/resend-verification')
+  // @ApiReactivateMe()
+  // resendVerificationEmail(@Body() dto: any) {
+  //   return this.customerService.resendVerificationEmail(loginDto);
+  // }
+
+  @Post('oauth/google')
+  googleLogin(@Body() dto: GoogleAuthDto) {
+    return this.saaSUserService.googleLogin(dto);
   }
 }

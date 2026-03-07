@@ -12,6 +12,7 @@ import { UpdateUserDto } from '../shared/dto/update-user.dto';
 import { SESSION_PATTERNS } from '../shared/patterns/session_patterns';
 import { CUSTOMER_AUTH_PATTERNS } from './patterns/customer-auth.patterns';
 import { CUSTOMER_USER_PATTERNS } from './patterns/customer-user.patterns';
+import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
 
 @Injectable()
 export class CustomerService {
@@ -23,15 +24,21 @@ export class CustomerService {
     );
   }
   login(loginDto: LoginDto) {
-    return firstValueFrom(this.client.send(CUSTOMER_AUTH_PATTERNS.LOGIN, loginDto));
+    return firstValueFrom(
+      this.client.send(CUSTOMER_AUTH_PATTERNS.LOGIN, loginDto),
+    );
   }
   logout(token: string) {
-    return firstValueFrom(this.client.send(SESSION_PATTERNS.CUSTOMER_LOGOUT, token));
+    return firstValueFrom(
+      this.client.send(SESSION_PATTERNS.CUSTOMER_LOGOUT, token),
+    );
   }
   logoutAll(id: string) {
-    return firstValueFrom(this.client.send(SESSION_PATTERNS.CUSTOMER_LOGOUT_ALL, id));
+    return firstValueFrom(
+      this.client.send(SESSION_PATTERNS.CUSTOMER_LOGOUT_ALL, id),
+    );
   }
-  
+
   refreshToken(refreshTokenDto: RefreshTokenDto) {
     const { refreshToken } = refreshTokenDto;
     return firstValueFrom(
@@ -80,6 +87,12 @@ export class CustomerService {
   restoreAcount(loginDto: LoginDto) {
     return firstValueFrom(
       this.client.send(CUSTOMER_USER_PATTERNS.RESTORE, loginDto),
+    );
+  }
+
+  googleLogin(dto: GoogleAuthDto) {
+    return firstValueFrom(
+      this.client.send(CUSTOMER_AUTH_PATTERNS.GOOGLE_AUTH, dto),
     );
   }
 }
