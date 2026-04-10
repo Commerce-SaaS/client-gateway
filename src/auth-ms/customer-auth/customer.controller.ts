@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  UseGuards,
+  Res,
+  Headers,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { AuthSessionGuard } from 'src/common/guards/auth-session.guard';
 import { Token } from 'src/common/decorators/token.decorator';
 import { User } from 'src/common/decorators/user.decorator';
@@ -24,6 +34,9 @@ import { CustomerService } from './customer.service';
 import { RegisterCustomerDto } from './dto/register-customer.dto';
 import { ApiRegisterCustomer } from './decorators/api-register-customer.decorator';
 import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
+import { ApiGoogleLogin } from '../shared/decorators/api-google-login.decorator';
+import { OrganizationId } from 'src/common/decorators/organizationId.decorator';
+import { sendAuthResponse } from '../shared/utils/auth';
 
 /**
  * Customer Authentication Controller
@@ -49,14 +62,38 @@ export class CustomerController {
 
   @Post('register')
   @ApiRegisterCustomer()
-  register(@Body() dto: RegisterCustomerDto) {
-    return this.customerService.register(dto);
+  async register(
+    @Body() dto: RegisterCustomerDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') clientType?: string,
+  ) {
+    const { user, tokens } = await this.customerService.register(dto);
+
+    return sendAuthResponse(
+      res,
+      user,
+      tokens.accessToken,
+      tokens.refreshToken,
+      (clientType as 'web' | 'native') || 'web',
+    );
   }
 
   @Post('login')
   @ApiLoginUser()
-  async login(@Body() loginDto: LoginDto) {
-    return this.customerService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') clientType?: string,
+  ) {
+    const { user, tokens } = await this.customerService.login(loginDto);
+
+    return sendAuthResponse(
+      res,
+      user,
+      tokens.accessToken,
+      tokens.refreshToken,
+      (clientType as 'web' | 'native') || 'web',
+    );
   }
 
   @UseGuards(AuthSessionGuard)
@@ -155,8 +192,25 @@ export class CustomerController {
   //   return this.customerService.resendVerificationEmail(loginDto);
   // }
 
-    @Post('oauth/google')
-    googleLogin(@Body() dto: GoogleAuthDto) {
-      return this.customerService.googleLogin(dto);
-    }
+  @Post('oauth/google')
+  @ApiGoogleLogin()
+  async googleLogin(
+    @Body() dto: GoogleAuthDto,
+    @OrganizationId() organizationId: string,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') clientType?: string,
+  ) {
+    const { user, tokens } = await this.customerService.googleLogin({
+      ...dto,
+      organizationId,
+    });
+
+    return sendAuthResponse(
+      res,
+      user,
+      tokens.accessToken,
+      tokens.refreshToken,
+      (clientType as 'web' | 'native') || 'web',
+    );
+  }
 }

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  UseGuards,
+  Res,
+  Headers,
+} from '@nestjs/common';
+import { Response } from 'express';
 
 import { RegisterUserDto } from '../shared/dto/register-user.dto';
 import { LoginDto } from '../shared/dto/login.dto';
@@ -25,6 +35,8 @@ import { ApiDeactivateMe } from '../shared/decorators/api-deactivate-me.decorato
 import { ApiReactivateMe } from '../shared/decorators/api-reactivate-me.decorator';
 import { SaaSUserService } from './saas-user.service';
 import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
+import { ApiGoogleLogin } from '../shared/decorators/api-google-login.decorator';
+import { sendAuthResponse } from '../shared/utils/auth';
 
 /**
  * SaaS User Authentication Controller
@@ -47,14 +59,37 @@ export class SaaSUserController {
 
   @Post('register')
   @ApiRegisterUser()
-  register(@Body() registerUserDto: RegisterUserDto) {
-    return this.saaSUserService.register(registerUserDto);
+  async register(
+    @Body() registerUserDto: RegisterUserDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') clientType?: string,
+  ) {
+    const { user, tokens } =
+      await this.saaSUserService.register(registerUserDto);
+    return sendAuthResponse(
+      res,
+      user,
+      tokens.accessToken,
+      tokens.refreshToken,
+      (clientType as 'web' | 'native') || 'web',
+    );
   }
 
   @Post('login')
   @ApiLoginUser()
-  async login(@Body() loginDto: LoginDto) {
-    return this.saaSUserService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') clientType?: string,
+  ) {
+    const { user, tokens } = await this.saaSUserService.login(loginDto);
+    return sendAuthResponse(
+      res,
+      user,
+      tokens.accessToken,
+      tokens.refreshToken,
+      (clientType as 'web' | 'native') || 'web',
+    );
   }
 
   @UseGuards(AuthSessionGuard)
@@ -154,7 +189,20 @@ export class SaaSUserController {
   // }
 
   @Post('oauth/google')
-  googleLogin(@Body() dto: GoogleAuthDto) {
-    return this.saaSUserService.googleLogin(dto);
+  @ApiGoogleLogin()
+  async googleLogin(
+    @Body() dto: GoogleAuthDto,
+    @Res({ passthrough: true }) res: Response,
+    @Headers('x-client-type') clientType?: string,
+  ) {
+    const { user, tokens } = await this.saaSUserService.googleLogin(dto);
+
+    return sendAuthResponse(
+      res,
+      user,
+      tokens.accessToken,
+      tokens.refreshToken,
+      (clientType as 'web' | 'native') || 'web',
+    );
   }
 }

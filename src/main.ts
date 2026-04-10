@@ -1,10 +1,10 @@
-import * as cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { envs } from './config';
 import { RpcCustomExceptionFilter } from './common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const logger = new Logger('Main-Gateway');
@@ -15,7 +15,7 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: true,
+    origin: 'http://localhost:3000',
     credentials: true,
   });
 
