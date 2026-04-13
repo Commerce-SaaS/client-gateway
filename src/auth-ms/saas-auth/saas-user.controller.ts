@@ -64,6 +64,7 @@ export class SaaSUserController {
     @Res({ passthrough: true }) res: Response,
     @Headers('x-client-type') clientType?: string,
   ) {
+    console.log('Registering user with data:', registerUserDto);
     const { user, tokens } =
       await this.saaSUserService.register(registerUserDto);
     return sendAuthResponse(

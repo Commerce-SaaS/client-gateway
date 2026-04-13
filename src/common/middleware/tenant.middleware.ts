@@ -9,19 +9,34 @@ export class TenantMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     let organizationId: string | undefined;
 
+    const urls = ['/saas/users/register', '/saas/users/login'];
+    const mobile = req.headers['x-client-type'] === 'native';
+    const path = req.originalUrl.toLowerCase();
     const host = req.headers.host?.split(':')[0].toLowerCase();
 
-    if (host) {
+    if (urls.includes(path) && mobile) {
+      req['organizationId'] = organizationId;
+      return next();
+    }
+
+    if (!organizationId) {
+      const headerId = req.headers['x-organization-id'] as string;
+
+      if (headerId) {
+        organizationId = headerId;
+      }
+      return next();
+    }
+
+    if (host && !organizationId) {
       const org = await this.orgService.findOne(host);
       organizationId = org?.organizationId;
     }
 
     if (!organizationId) {
-      const headerId = req.headers['x-organization-id'] as string;
-      if (!headerId) {
-        return res.status(400).json({ message: 'Organization ID required' });
-      }
-      organizationId = headerId;
+      return res.status(400).json({
+        message: 'Organization could not be resolved',
+      });
     }
 
     req['organizationId'] = organizationId;

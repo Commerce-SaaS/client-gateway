@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 const envSchema = z
   .object({
-    PORT: z.coerce.number().default(3000),
+    PORT: z.coerce.number().default(4000),
     FRONT_URL: z.string().url(),
     JWT_SECRET_ACCESS: z.string(),
     RABBITMQ_URL: z
