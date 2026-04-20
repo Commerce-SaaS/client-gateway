@@ -10,7 +10,7 @@ export class TenantMiddleware implements NestMiddleware {
     let organizationId: string | undefined;
 
     const urls = ['/saas/users/register', '/saas/users/login'];
-    const mobile = req.headers['x-client-type'] === 'native';
+    const mobile = req.headers['x-client-type'] === 'mobile';
     const path = req.originalUrl.toLowerCase();
     const host = req.headers.host?.split(':')[0].toLowerCase();
 

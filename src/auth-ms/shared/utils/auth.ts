@@ -6,11 +6,11 @@ export const sendAuthResponse = (
   user: any,
   accessToken: string,
   refreshToken: string,
-  clientType: 'web' | 'native'
+  clientType: 'web' | 'mobile'
 ) => {
 
-    if (clientType === 'native') {
-      return { user, accessToken, refreshToken };
+    if (clientType === 'mobile') {
+      return { user, tokens:{accessToken, refreshToken} };
     } else {
       // Web: set cookies httpOnly
       res.cookie('accessToken', accessToken, {

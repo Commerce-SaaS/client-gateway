@@ -72,7 +72,7 @@ export class SaaSUserController {
       user,
       tokens.accessToken,
       tokens.refreshToken,
-      (clientType as 'web' | 'native') || 'web',
+      (clientType as 'web' | 'mobile') || 'web',
     );
   }
 
@@ -83,13 +83,14 @@ export class SaaSUserController {
     @Res({ passthrough: true }) res: Response,
     @Headers('x-client-type') clientType?: string,
   ) {
+    console.log(loginDto);
     const { user, tokens } = await this.saaSUserService.login(loginDto);
     return sendAuthResponse(
       res,
       user,
       tokens.accessToken,
       tokens.refreshToken,
-      (clientType as 'web' | 'native') || 'web',
+      (clientType as 'web' | 'mobile') || 'web',
     );
   }
 
@@ -113,6 +114,19 @@ export class SaaSUserController {
     return this.saaSUserService.refreshToken(refreshTokenDto);
   }
 
+  @Post('forgot-password')
+  @ApiForgotPassword()
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.saaSUserService.forgotPassword(dto);
+  }
+
+  @Post('reset-password')
+  @ApiResetPassword()
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.saaSUserService.resetPassword(dto);
+  }
+
+  
   @UseGuards(AuthSessionGuard)
   @Get('me')
   @ApiGetMe()
@@ -140,18 +154,6 @@ export class SaaSUserController {
     return this.saaSUserService.changePassword(user.id, changePasswordDto);
   }
 
-  @Post('forgot-password')
-  @ApiForgotPassword()
-  forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.saaSUserService.forgotPassword(dto);
-  }
-
-  @Post('reset-password')
-  @ApiResetPassword()
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.saaSUserService.resetPassword(dto);
-  }
-
   @UseGuards(AuthSessionGuard)
   @Patch('me/deactivate')
   @ApiDeactivateMe()
@@ -159,17 +161,19 @@ export class SaaSUserController {
     return this.saaSUserService.deleteAcount(user.id);
   }
 
-  // @Delete('me')
-  // @ApiDeleteMe()
-  // delete(@Body() dto: any) {
-  //   return this.customerService.delete(dto);
-  // }
-
   @Patch('me/restore')
   @ApiReactivateMe()
   restoreUser(@Body() loginDto: LoginDto) {
     return this.saaSUserService.restoreAcount(loginDto);
   }
+
+
+  //TODO: Implement account deletion and restoration flows with proper email verification and security measures.
+  // @Delete('me')
+  // @ApiDeleteMe()
+  // delete(@Body() dto: any) {
+  //   return this.customerService.delete(dto);
+  // }
 
   // @Patch('email')
   // @ApiReactivateMe()
@@ -203,7 +207,7 @@ export class SaaSUserController {
       user,
       tokens.accessToken,
       tokens.refreshToken,
-      (clientType as 'web' | 'native') || 'web',
+      (clientType as 'web' | 'mobile') || 'web',
     );
   }
 }

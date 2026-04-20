@@ -74,7 +74,7 @@ export class CustomerController {
       user,
       tokens.accessToken,
       tokens.refreshToken,
-      (clientType as 'web' | 'native') || 'web',
+      (clientType as 'web' | 'mobile') || 'web',
     );
   }
 
@@ -92,7 +92,7 @@ export class CustomerController {
       user,
       tokens.accessToken,
       tokens.refreshToken,
-      (clientType as 'web' | 'native') || 'web',
+      (clientType as 'web' | 'mobile') || 'web',
     );
   }
 
@@ -210,7 +210,7 @@ export class CustomerController {
       user,
       tokens.accessToken,
       tokens.refreshToken,
-      (clientType as 'web' | 'native') || 'web',
+      (clientType as 'web' | 'mobile') || 'web',
     );
   }
 }
