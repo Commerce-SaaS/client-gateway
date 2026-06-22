@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ProductsService } from './product.service';
 import { OrganizationId } from 'src/common/decorators/organizationId.decorator';
 import { User } from 'src/common/decorators/user.decorator';
@@ -24,28 +25,32 @@ import { ApiFindOnePublicResponse } from 'src/common/decorators/swagger/api-find
 import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-response.decorator';
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
+import { PublicTenant } from 'src/common/decorators/public-tenant.decorator';
 
+@ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly service: ProductsService) {}
 
   @Post()
   @ApiCreateResponse(CreateProductDto)
-  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF], 'saas')
   create(@Body() dto: CreateProductDto, @User() user: CurrentUserContext) {
     return this.service.create(dto, user.organizationId);
   }
 
   @Get()
+  @PublicTenant()
   @ApiFindAllProducts()
   findAll(
     @Query() paginationProductDto: PaginationProductDto,
     @OrganizationId() organizationId: string,
   ) {
-    return this.service.findAllProducts(paginationProductDto, organizationId);
+    return this.service.findAll(paginationProductDto, organizationId);
   }
 
   @Get(':id')
+  @PublicTenant()
   @ApiFindOnePublicResponse('Product')
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -55,7 +60,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF], 'saas')
   @ApiUpdateResponse(UpdateProductDto)
   update(
     @Param('id', ParseUUIDPipe) id: string,

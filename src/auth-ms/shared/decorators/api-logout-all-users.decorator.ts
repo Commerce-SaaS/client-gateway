@@ -5,7 +5,6 @@ import {
   ApiResponse,
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
 } from '@nestjs/swagger';
 
 export const ApiLogoutAllUsers = () => {
@@ -15,7 +14,6 @@ export const ApiLogoutAllUsers = () => {
       summary: 'Logout from all sessions',
       description: 'Invalidate all sessions and tokens for the current user.',
     }),
-    ApiBearerAuth(),
     ApiResponse({
       status: 201,
       description: 'All user sessions logged out successfully.',

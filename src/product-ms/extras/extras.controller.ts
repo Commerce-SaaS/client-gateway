@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateExtraDto } from './dto/create-extra.dto';
 import { UpdateExtraDto } from './dto/update-extra.dto';
 import { ExtrasService } from './extras.service';
@@ -25,6 +26,7 @@ import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-re
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
 
+@ApiTags('Extras')
 @Controller('extras')
 export class ExtrasController {
   constructor(private readonly service: ExtrasService) {}

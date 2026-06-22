@@ -7,41 +7,26 @@ import {
   ApiConflictResponse,
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { RegisterUserDto } from '../dto/register-user.dto';
 
 export const ApiRegisterUser = () => {
   return applyDecorators(
     ApiOperation({
-      summary: 'Register a new user',
-      description: 'Registers a user with email, password, and name.',
+      summary: 'Register a new SaaS user',
+      description:
+        'Registers a SaaS platform user (organization owner/staff) with email, password, and name. Web clients receive tokens as httpOnly cookies; mobile clients receive them in the response body.',
     }),
     ApiBody({
-      description: 'User registration data',
       type: RegisterUserDto,
-      schema: {
-        example: {
-          email: 'user@example.com',
-          password: 'StrongPassword123!',
-          name: 'John Doe',
-        },
-      },
     }),
     ApiResponse({
       status: 201,
       description: 'User registered successfully.',
       schema: {
         example: {
-          user: {
-            id: '3ce207fb-0b94-4316-aeef-dca14d36faee',
-            email: 'user@example.com',
-            name: 'John Doe',
-            createdAt: '2026-01-27T16:29:09.217Z',
-          },
-          tokens: {
-            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          },
+          message: 'User registered successfully.'
         },
       },
     }),

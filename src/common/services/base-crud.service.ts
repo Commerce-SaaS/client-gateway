@@ -1,7 +1,7 @@
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
 import { PaginationDto } from 'src/common';
 import { CrudService } from '../interfaces/crud-service.interface';
+import { rpcSend } from '../utils/rpc.utils';
 
 export abstract class BaseCrudService<CreateDto, UpdateDto>
   implements CrudService<CreateDto, UpdateDto>
@@ -18,49 +18,37 @@ export abstract class BaseCrudService<CreateDto, UpdateDto>
     },
   ) {}
 
-  create(dto: CreateDto, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(this.patterns.CREATE, {
-        ...dto,
-        organizationId,
-      }),
-    );
+  create(dto: CreateDto, organizationId?: string) {
+    return rpcSend(this.client, this.patterns.CREATE, {
+      ...dto,
+      organizationId,
+    });
   }
 
   findAll(paginationDto: PaginationDto, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(this.patterns.FIND_ALL, {
-        ...paginationDto,
-        organizationId,
-      }),
-    );
+    return rpcSend(this.client, this.patterns.FIND_ALL, {
+      ...paginationDto,
+      organizationId,
+    });
   }
 
-  findOne(domain: string, organizationId?: string) {
-    return firstValueFrom(
-      this.client.send(this.patterns.FIND_ONE, { domain, organizationId }),
-    );
+  findOne(id: string, organizationId?: string) {
+    return rpcSend(this.client, this.patterns.FIND_ONE, { id, organizationId });
   }
 
   update(id: string, dto: UpdateDto, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(this.patterns.UPDATE, {
-        id,
-        ...dto,
-        organizationId,
-      }),
-    );
+    return rpcSend(this.client, this.patterns.UPDATE, {
+      id,
+      ...dto,
+      organizationId,
+    });
   }
 
   remove(id: string, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(this.patterns.DELETE, { id, organizationId }),
-    );
+    return rpcSend(this.client, this.patterns.DELETE, { id, organizationId });
   }
 
   restore(id: string, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(this.patterns.RESTORE, { id, organizationId }),
-    );
+    return rpcSend(this.client, this.patterns.RESTORE, { id, organizationId });
   }
 }

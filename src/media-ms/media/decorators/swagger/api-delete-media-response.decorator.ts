@@ -15,6 +15,16 @@ export const ApiDeleteMediaResponse = (name = 'Media') =>
   applyDecorators(
     ApiBearerAuth('jwt'),
     ApiOperation({ summary: `Delete ${name}` }),
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
 
     ApiResponse({
       status: 200,

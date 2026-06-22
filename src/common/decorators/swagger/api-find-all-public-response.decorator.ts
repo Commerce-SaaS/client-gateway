@@ -4,8 +4,8 @@ import {
   ApiResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
   ApiQuery,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 const exampleResponse = {
@@ -59,6 +59,17 @@ export const ApiFindAllPublicResponse = (entityName: string) =>
     }),
 
     ApiOperation({ summary: `Get all ${entityName}` }),
+
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
 
     ApiResponse({
       status: 200,

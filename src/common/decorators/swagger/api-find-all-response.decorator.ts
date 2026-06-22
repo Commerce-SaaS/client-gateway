@@ -4,15 +4,15 @@ import {
   ApiResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
   ApiQuery,
   ApiBearerAuth,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 export const ApiFindAllResponse = (entityName: string) =>
   applyDecorators(
     ApiBearerAuth('jwt'),
-// ----------- Query params -----------
+    // ----------- Query params -----------
     ApiQuery({
       name: 'offset',
       required: false,
@@ -33,7 +33,7 @@ export const ApiFindAllResponse = (entityName: string) =>
       name: 'search',
       required: false,
       type: String,
-      description: 'Free text search by product name',
+      description: `Free text search by ${entityName} name`,
       example: 'pizza',
     }),
 
@@ -41,11 +41,22 @@ export const ApiFindAllResponse = (entityName: string) =>
       name: 'withDeleted',
       required: false,
       type: Boolean,
-      description: 'Include soft-deleted products',
+      description: `Include soft-deleted ${entityName} records`,
       example: false,
     }),
 
     ApiOperation({ summary: `Get all ${entityName}` }),
+
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
 
     ApiResponse({
       status: 200,

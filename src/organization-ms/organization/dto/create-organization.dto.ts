@@ -19,7 +19,7 @@ export class CreateOrganizationDto {
   @IsString()
   @IsNotEmpty()
   @Length(2, 50)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({
     description: 'Address of the organization',
@@ -36,7 +36,8 @@ export class CreateOrganizationDto {
     example: '3ce207fb-0b94-4316-aeef-dca14d36faee',
   })
   @IsUUID()
-  ownerId: string;
+  @IsOptional()
+  ownerId?: string;
 
   @ApiPropertyOptional({
     description: 'URL of the organization logo',
@@ -52,7 +53,7 @@ export class CreateOrganizationDto {
   })
   @IsEmail()
   @IsOptional()
-  contactEmail: string;
+  contactEmail?: string;
 
   @ApiPropertyOptional({
     description: 'Contact phone number for the organization',

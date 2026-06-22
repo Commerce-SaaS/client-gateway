@@ -14,21 +14,14 @@ export const ApiLoginUser = () => {
     ApiOperation({
       summary: 'User login',
       description:
-        'Authenticate user using email and password and receive access and refresh tokens.',
+        'Authenticate user with email and password. Web clients receive tokens as httpOnly cookies; mobile clients receive them in the response body.',
     }),
     ApiBody({
-      description: 'Login credentials',
       type: LoginDto,
-      schema: {
-        example: {
-          email: 'user@example.com',
-          password: 'StrongPassword123!',
-        },
-      },
     }),
     ApiResponse({
       status: 201,
-      description: 'Login successful, returns user info and tokens.',
+      description: 'Login successful. Mobile clients receive tokens in body; web clients receive httpOnly cookies.',
       schema: {
         example: {
           user: {
@@ -38,8 +31,8 @@ export const ApiLoginUser = () => {
             createdAt: '2026-01-27T16:29:09.217Z',
           },
           tokens: {
-            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (mobile only)',
+            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (mobile only)',
           },
         },
       },

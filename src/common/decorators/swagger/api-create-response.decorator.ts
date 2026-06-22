@@ -5,31 +5,37 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
-  ApiConflictResponse,
   ApiInternalServerErrorResponse,
   ApiBody,
-  ApiHeader,
   ApiBearerAuth,
-  ApiNotFoundResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 export const ApiCreateResponse = <TModel extends Type<any>>(model: TModel) =>
   applyDecorators(
     ApiBearerAuth('jwt'),
     ApiBody({ type: model }),
-    ApiOperation({ summary: `Create a new ${model.name}` }),
+    ApiOperation({
+      summary: `Create a new ${model.name.replace('Dto', '').replace(/([a-z])([A-Z])/g, '$1 $2')}`,
+    }),
     ApiResponse({
       status: 201,
       description: `${model.name} created successfully`,
       schema: {
         example: {
-          message: `${model.name} created successfully`,
-          data: {
-            url: 'http://example.com/checkout-session',
-            cancelUrl: 'http://example.com/cancel',
-          },
+          message: `Created successfully`,
           statusCode: 201,
         },
+      },
+    }),
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
       },
     }),
     ApiBadRequestResponse({

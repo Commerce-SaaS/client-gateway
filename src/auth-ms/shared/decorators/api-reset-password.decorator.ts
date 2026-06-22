@@ -16,7 +16,6 @@ export const ApiResetPassword = () =>
       description:
         'Resets the user password using a valid password reset token.',
     }),
-
     ApiBody({
       type: ResetPasswordDto,
     }),

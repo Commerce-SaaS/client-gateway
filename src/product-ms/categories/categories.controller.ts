@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/common';
 import { ApiCreateResponse } from 'src/common/decorators/swagger/api-create-response.decorator';
 import { OrganizationId } from 'src/common/decorators/organizationId.decorator';
@@ -25,6 +26,7 @@ import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-re
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
 
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly service: CategoriesService) {}

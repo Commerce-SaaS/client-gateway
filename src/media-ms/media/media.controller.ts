@@ -6,7 +6,9 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { OrganizationRole } from 'src/common/enums/organization-roles.enum';
@@ -15,6 +17,7 @@ import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organiz
 import { ApiDeleteMediaResponse } from './decorators/swagger/api-delete-media-response.decorator';
 import { ApiUploadResponse } from './decorators/swagger/api-upload-media-response.decorator';
 
+@ApiTags('Media')
 @Controller('media')
 @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
 export class MediaController {
@@ -22,9 +25,19 @@ export class MediaController {
 
   @Post()
   @ApiUploadResponse()
-  @UseInterceptors(FileInterceptor('file'))
-  async upload(@UploadedFile() file: Express.Multer.File, @Body() body: any) {
-    return this.mediaService.create({ file, ...body });
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new BadRequestException('Only images are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async upload(@UploadedFile() file: Express.Multer.File) {
+    return this.mediaService.create({ file });
   }
 
   @Delete(':id')

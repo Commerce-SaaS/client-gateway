@@ -2,65 +2,60 @@ import {
   Body,
   Controller,
   Get,
-  Param,
-  ParseUUIDPipe,
   Patch,
-  Post
+  Post,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { OrganizationService } from './organization.service';
-import { OrganizationId } from 'src/common/decorators/organizationId.decorator';
 import { User } from 'src/common/decorators/user.decorator';
 import { CurrentUserContext } from 'src/common/interfaces/current-user-context.type';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { ApiSoftDeleteResponse } from 'src/common/decorators/swagger/api-soft-delete-response.decorator';
-import { ApiFindOneResponse } from 'src/common/decorators/swagger/api-find-one-response.decorator';
 import { ApiCreateOrganizationResponse } from './decorators/api-create-organization-response.decorator';
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { OrganizationRole } from 'src/common/enums/organization-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
-import { ApiUpdateResponse } from 'src/common/decorators/swagger/api-update-response.decorator';
 import { PlatformAuth } from 'src/common/decorators/platform-auth.decorator';
+import { AuthenticatedUser } from 'src/common/interfaces/current-user-context.type';
+import { PaidOnboardingGuard } from 'src/common/guards/paid-onboarding.guard';
+import { AuthSessionGuard } from 'src/common/guards/auth-session.guard';
+import { PlatformRolesGuard } from 'src/common/guards/platform-roles.guard';
 
+@ApiTags('Organizations')
 @Controller('organization')
 export class OrganizationController {
   constructor(private readonly service: OrganizationService) {}
 
   @Post()
   @PlatformAuth(PlatformRolesEnum.STAFF)
+  @UseGuards(AuthSessionGuard, PlatformRolesGuard, PaidOnboardingGuard)
   @ApiCreateOrganizationResponse(CreateOrganizationDto)
-  create(@Body() dto: CreateOrganizationDto, @User() user: CurrentUserContext) {
-    return this.service.create(dto, user.organizationId);
+  create(@Body() dto: CreateOrganizationDto, @User() user: AuthenticatedUser) {
+    return this.service.create({
+      ...dto,
+      ownerId: user.id,
+    });
   }
 
-  @Get(':id')
+  @Get('')
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
-  @ApiFindOneResponse('Organization')
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @OrganizationId() organizationId: string,
-  ) {
-    return this.service.findOne(id, organizationId);
+  findOne(@User() user: CurrentUserContext) {
+    const { organizationId } = user;
+    return this.service.findOne(organizationId);
   }
 
-  @Patch(':id')
-  @ApiUpdateResponse(UpdateOrganizationDto)
+  @Patch('')
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateOrganizationDto,
-    @User() user: CurrentUserContext,
-  ) {
-    return this.service.update(id, dto, user.organizationId);
+  update(@Body() dto: UpdateOrganizationDto, @User() user: CurrentUserContext) {
+    const { organizationId } = user;
+    return this.service.update(organizationId, dto, organizationId);
   }
 
-  @Patch(':id/soft-delete')
+  @Patch('soft-delete')
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
-  @ApiSoftDeleteResponse('Organization')
-  remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @User() user: CurrentUserContext,
-  ) {
-    return this.service.remove(id, user.organizationId);
+  remove(@User() user: CurrentUserContext) {
+    const { organizationId } = user;
+    return this.service.remove(organizationId, organizationId);
   }
 }

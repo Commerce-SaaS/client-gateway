@@ -14,35 +14,27 @@ import { RegisterCustomerDto } from '../dto/register-customer.dto';
 export const ApiRegisterCustomer = () => {
   return applyDecorators(
     ApiOperation({
-      summary: 'Register a new user',
-      description: 'Registers a user with email, password, and name.',
+      summary: 'Register a new customer',
+      description:
+        'Registers a tenant-scoped customer account. The customer is linked to a specific organization (tenant). Web clients receive tokens as httpOnly cookies; mobile clients receive them in the response body.',
     }),
     ApiBody({
-      description: 'User registration data',
       type: RegisterCustomerDto,
-      schema: {
-        example: {
-          email: 'user@example.com',
-          password: 'StrongPassword123!',
-          name: 'John Doe',
-          organizationId: '34f62db9-8d4d-4d1d-af8b-51afb0a4dcc2'
-        },
-      },
     }),
     ApiResponse({
       status: 201,
-      description: 'User registered successfully.',
+      description: 'Customer registered successfully. Mobile clients receive tokens in body; web clients receive httpOnly cookies.',
       schema: {
         example: {
           user: {
             id: '3ce207fb-0b94-4316-aeef-dca14d36faee',
-            email: 'user@example.com',
+            email: 'customer@example.com',
             name: 'John Doe',
             createdAt: '2026-01-27T16:29:09.217Z',
           },
           tokens: {
-            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (mobile only)',
+            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (mobile only)',
           },
         },
       },

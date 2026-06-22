@@ -1,7 +1,8 @@
 export interface JwtData {
-    jti:   string;
-    sub:   string;
+    jti: string;
+    sub: string;
+    aud: 'saas' | 'customer';
     platformRole?: string;
-    iat:   number;
-    exp:   number;
+    iat: number;
+    exp: number;
 }

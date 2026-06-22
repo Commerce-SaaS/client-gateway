@@ -1,8 +1,13 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { CreateOrganizationDto } from './create-organization.dto';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateOrganizationDto extends PartialType(CreateOrganizationDto) {
-      @IsString()
-      stripeAccountId: string;
+  @ApiPropertyOptional({
+    description: 'Stripe Connect account ID linked to this organization',
+    example: 'acct_1234567890',
+  })
+  @IsString()
+  @IsOptional()
+  stripeAccountId?: string;
 }

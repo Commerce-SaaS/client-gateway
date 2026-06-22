@@ -28,7 +28,7 @@ export const ApiChangeMyPassword = () =>
     }),
 
    ApiResponse({
-      status: 201,
+      status: 200,
       description: 'Password changed successfully',
       schema: {
         example: {

@@ -7,14 +7,33 @@ import {
   ApiForbiddenResponse,
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
   ApiBearerAuth,
   ApiBody,
+  ApiHeader,
+  ApiParam,
 } from '@nestjs/swagger';
 
 export const ApiUpdateResponse = <TModel extends Type<any>>(model: TModel) =>
   applyDecorators(
     ApiBearerAuth('jwt'),
+
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
+
+    ApiParam({
+      name: 'id',
+      required: true,
+      description: `${model.name} identifier`,
+      schema: { type: 'string', format: 'uuid' },
+    }),
 
     ApiBody({ type: model }),
 

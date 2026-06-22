@@ -1,4 +1,4 @@
-import { applyDecorators, Type } from '@nestjs/common';
+import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
@@ -6,10 +6,10 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
   ApiBearerAuth,
   ApiNotFoundResponse,
   ApiParam,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 export const ApiFindOneResponse = (entityName: string) =>
@@ -27,6 +27,16 @@ export const ApiFindOneResponse = (entityName: string) =>
 
     ApiOperation({ summary: `Get ${entityName} by id` }),
 
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
     ApiResponse({
       status: 200,
       description: `${entityName} retrieved successfully`,

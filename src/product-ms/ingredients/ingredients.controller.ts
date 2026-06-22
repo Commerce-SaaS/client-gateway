@@ -8,14 +8,15 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { PaginationDto } from 'src/common';
 import { ApiCreateResponse } from 'src/common/decorators/swagger/api-create-response.decorator';
 import { OrganizationId } from 'src/common/decorators/organizationId.decorator';
 import { User } from 'src/common/decorators/user.decorator';
 import { OrganizationRole } from 'src/common/enums/organization-roles.enum';
 import { CurrentUserContext } from 'src/common/interfaces/current-user-context.type';
-import { CreateIngredientDto } from '../ingredients/dto/create-ingredient.dto';
-import { UpdateIngredientDto } from '../ingredients/dto/update-ingredient.dto';
+import { CreateIngredientDto } from './dto/create-ingredient.dto';
+import { UpdateIngredientDto } from './dto/update-ingredient.dto';
 import { IngredientsService } from './ingredients.service';
 import { ApiUpdateResponse } from 'src/common/decorators/swagger/api-update-response.decorator';
 import { ApiSoftDeleteResponse } from 'src/common/decorators/swagger/api-soft-delete-response.decorator';
@@ -25,6 +26,7 @@ import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-re
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
 
+@ApiTags('Ingredients')
 @Controller('ingredients')
 export class IngredientsController {
   constructor(private readonly service: IngredientsService) {}

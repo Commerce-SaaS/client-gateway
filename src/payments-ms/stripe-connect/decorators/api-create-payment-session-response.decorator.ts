@@ -9,12 +9,23 @@ import {
   ApiInternalServerErrorResponse,
   ApiBearerAuth,
   ApiNotFoundResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 export const ApiConnectStripeResponse = () =>
   applyDecorators(
     ApiBearerAuth('jwt'),
     ApiOperation({ summary: `Connect a new stripe account` }),
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
     ApiResponse({
       status: 201,
       description: `Account connected successfully`,

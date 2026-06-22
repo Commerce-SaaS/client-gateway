@@ -13,8 +13,9 @@ export class CreatePaymentDto {
     description: 'Order ID',
     example: '01d2acaa-5a3b-404a-9471-41b060895b18',
   })
+  @IsString()
   orderId: string;
-  
+
   @ApiProperty({
     description: 'Amount of the payment',
     example: 49.99,
@@ -31,9 +32,16 @@ export class CreatePaymentDto {
   currency: Currency;
 
   @ApiProperty({
-    description: 'Payment provider',
-    example: 'Stripe',
+    description: 'Payment Method id',
+    example: '01d2acaa-5a3b-404a-9471-41b060895b18',
   })
   @IsString()
-  provider: string;
+  paymentMethodId: string;
+
+  @ApiProperty({
+    description: 'Payment Method name',
+    example: 'cash',
+  })
+  @IsString()
+  paymentMethodName: string;
 }

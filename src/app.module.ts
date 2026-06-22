@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RabbitMQModule } from './transports/rabbitmq.module';
 import { AUTH_SERVICE, envs } from './config';
 import { RedisModule } from './redis/redis.module';
@@ -23,15 +24,21 @@ import { ExtrasModule } from './product-ms/extras/extras.module';
 import { IngredientsModule } from './product-ms/ingredients/ingredients.module';
 import { CategoriesModule } from './product-ms/categories/categories.module';
 import { ProductsModule } from './product-ms/products/products.module';
-import { OrderStatusHistoryModule } from './orders-ms/order-status-history/order-status-history.module';
 import { OrdersModule } from './orders-ms/orders/orders.module';
 import { SaaSUserModule } from './auth-ms/saas-auth/saas-user.module';
 import { CustomerModule } from './auth-ms/customer-auth/customer.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 import { StripeModule } from './payments-ms/stripe-connect/stripe.module';
+import { CustomersModule } from './auth-ms/customers/customers.module';
+import { PaymentMethodsModule } from './payments-ms/payment-methods/payment-methods.module';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     ProductsModule,
     CategoriesModule,
     IngredientsModule,
@@ -83,15 +90,16 @@ import { StripeModule } from './payments-ms/stripe-connect/stripe.module';
     RedisModule,
     OrganizationModule,
     UserOrganizationModule,
-    MediaModule,
     OrganizationDomainsModule,
     SubscriptionModule,
     PaymentModule,
     WebhooksModule,
-    OrderStatusHistoryModule,
     OrdersModule,
     StripeModule,
+    CustomersModule,
+    PaymentMethodsModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard },]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -3,43 +3,43 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { ORDER_PATTERNS } from './patterns/order-patterns';
 import { ORDERS_SERVICE } from 'src/config/services';
-import { firstValueFrom } from 'rxjs';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CurrentUserContext } from 'src/common/interfaces/current-user-context.type';
 import { OrganizationRole } from 'src/common/enums/organization-roles.enum';
+import { rpcSend } from 'src/common/utils/rpc.utils';
+import { UpdateOrderDto } from './dto/update-order.dto';
+import { OrdersPaginationDto } from './dto/orders-pagination.dto';
+import { FindOneByOrgDto } from './dto/find-one-by-org.dto';
 
 @Injectable()
 export class OrdersService {
   constructor(@Inject(ORDERS_SERVICE) private readonly client: ClientProxy) {}
-  
+
   create(dto: CreateOrderDto, user: CurrentUserContext) {
     const { organizationId, id, organizationRole } = user;
-    return firstValueFrom(
-      this.client.send(ORDER_PATTERNS.CREATE, {
-        ...dto,
-        organizationId,
-        userId: organizationRole === OrganizationRole.STAFF ? undefined : id, 
-      }),
-    );
+    return rpcSend(this.client, ORDER_PATTERNS.CREATE, {
+      ...dto,
+      organizationId,
+      userId: organizationRole === OrganizationRole.STAFF ? undefined : id,
+    });
   }
 
-  findAll(paginationDto: PaginationDto, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(ORDER_PATTERNS.FIND_ALL, {
-        ...paginationDto,
-        organizationId,
-      }),
-    );
+  findAll(paginationDto: OrdersPaginationDto, organizationId: string) {
+    return rpcSend(this.client, ORDER_PATTERNS.FIND_ALL, {
+      ...paginationDto,
+      organizationId,
+    });
   }
 
-  findOne(id: string, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(ORDER_PATTERNS.FIND_ONE, { id, organizationId }),
-    );
+  findOne(dto: FindOneByOrgDto) {
+    return rpcSend(this.client, ORDER_PATTERNS.FIND_ONE, dto);
   }
-  cancel(id: string, organizationId: string) {
-    return firstValueFrom(
-      this.client.send(ORDER_PATTERNS.CANCEL, { id, organizationId }),
-    );
+
+  update(id: string, updateData: UpdateOrderDto, organizationId: string) {
+    return rpcSend(this.client, ORDER_PATTERNS.UPDATE, {
+      id,
+      ...updateData,
+      organizationId,
+    });
   }
 }

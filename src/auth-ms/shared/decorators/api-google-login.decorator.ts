@@ -7,23 +7,17 @@ import {
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
+import { GoogleAuthDto } from '../dto/google-auth.dto';
 
 export const ApiGoogleLogin = () => {
   return applyDecorators(
     ApiOperation({
       summary: 'Login with Google OAuth',
       description:
-        'Authenticate a customer using a Google OAuth ID token. The token must be obtained from Google Sign-In on the client side.',
+        'Authenticate using a Google OAuth ID token. For customer login, the tenant organizationId is resolved from the request context (header or domain). Web clients receive tokens as httpOnly cookies; mobile clients receive them in the response body.',
     }),
-
     ApiBody({
-      description: 'Google OAuth ID token obtained from Google Sign-In',
-      schema: {
-        example: {
-          idToken:
-            'eyJhbGciOiJSUzI1NiIsImtpZCI6IjA1YzE5M2Y4YzA2Nz...',
-        },
-      },
+      type: GoogleAuthDto,
     }),
 
     ApiResponse({

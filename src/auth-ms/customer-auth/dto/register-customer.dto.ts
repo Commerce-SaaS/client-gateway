@@ -1,6 +1,7 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsStrongPassword,
   IsUUID,
@@ -15,14 +16,6 @@ export class RegisterCustomerDto {
   @IsEmail()
   @IsString()
   email: string;
-
-  @ApiProperty({
-    description:
-      'UUID of the tenant organization that owns this customer account. This ensures tenant isolation in the multi-tenant system.',
-    example: '34f62db9-8d4d-4d1d-af8b-51afb0a4dcc2',
-  })
-  @IsUUID()
-  organizationId: string;
 
   @ApiProperty({
     description:

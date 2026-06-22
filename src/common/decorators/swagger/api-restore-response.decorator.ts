@@ -6,9 +6,10 @@ import {
   ApiUnauthorizedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
   ApiBearerAuth,
-  ApiNotFoundResponse
+  ApiNotFoundResponse,
+  ApiHeader,
+  ApiParam,
 } from '@nestjs/swagger';
 
 export const ApiRestoreResponse = (entityName: string) =>
@@ -16,6 +17,24 @@ export const ApiRestoreResponse = (entityName: string) =>
     ApiBearerAuth('jwt'),
 
     ApiOperation({ summary: `Restore ${entityName}` }),
+
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
+
+    ApiParam({
+      name: 'id',
+      required: true,
+      description: `${entityName} identifier`,
+      schema: { type: 'string', format: 'uuid' },
+    }),
 
     ApiResponse({
       status: 200,
@@ -27,18 +46,12 @@ export const ApiRestoreResponse = (entityName: string) =>
         },
       },
     }),
-
     ApiBadRequestResponse({
-      description: 'Validation error',
+      description: `${entityName} is not deleted`,
       schema: {
-        example: {
-          message: ['invalid id'],
-          statusCode: 400,
-          error: 'Bad Request',
-        },
+        example: { message: `${entityName} is not deleted`, statusCode: 400 },
       },
     }),
-
     ApiUnauthorizedResponse({
       description: 'Unauthorized',
       schema: {
@@ -62,13 +75,9 @@ export const ApiRestoreResponse = (entityName: string) =>
     }),
 
     ApiNotFoundResponse({
-      description: `${entityName} not found or not deleted`,
+      description: `${entityName} not found`,
       schema: {
-        example: {
-          message: `${entityName} not found or not deleted`,
-          statusCode: 404,
-          error: 'Not Found',
-        },
+        example: { message: `${entityName} not found`, statusCode: 404 },
       },
     }),
 

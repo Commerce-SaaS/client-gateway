@@ -4,8 +4,8 @@ import {
   ApiResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
-  ApiHeader,
   ApiQuery,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 const productExample = {
@@ -46,9 +46,18 @@ const productExample = {
   ],
 };
 
-
 export const ApiFindAllProducts = () =>
   applyDecorators(
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
     // ----------- Query params -----------
     ApiQuery({
       name: 'offset',

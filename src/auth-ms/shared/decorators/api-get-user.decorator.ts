@@ -19,7 +19,7 @@ export const ApiGetMe = () =>
     }),
 
     ApiResponse({
-      status: 201,
+      status: 200,
       description: 'User profile retrieved successfully',
       type: UserResponseDto,
     }),

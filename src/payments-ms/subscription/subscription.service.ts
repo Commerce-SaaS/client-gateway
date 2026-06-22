@@ -1,26 +1,67 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
 import { SUBSCRIPTION_PATTERNS } from './patterns/suscription_patterns';
 import { ClientProxy } from '@nestjs/microservices';
 import { PAYMENT_SERVICE } from 'src/config/services';
-import { CreateSubscriptionSessionDto } from './dto/create-subscription-session.dto';
-import { CurrentUserContext } from 'src/common/interfaces/current-user-context.type';
+import { rpcSend } from 'src/common/utils/rpc.utils';
+import { CreateOnboardingSubscriptionSessionDto } from './dto/create-onboarding-subscription-session.dto';
+import { SubscriptionPlan } from './enums/subscription-plan.enum';
+import { SubscriptionErrorCode } from './enums/subscription-error-code.enum';
 
 @Injectable()
 export class SubscriptionService {
   constructor(@Inject(PAYMENT_SERVICE) private readonly client: ClientProxy) {}
 
-  createSubscriptionSession(
-    dto: CreateSubscriptionSessionDto,
-    organizationId: string,
-    user: CurrentUserContext,
+  createOnboardingSubscriptionSession(
+    dto: CreateOnboardingSubscriptionSessionDto,
+    userId: string,
   ) {
-    return firstValueFrom(
-      this.client.send(SUBSCRIPTION_PATTERNS.CREATE_SUBSCRIPTION_SESSION, {
+    return rpcSend(
+      this.client,
+      SUBSCRIPTION_PATTERNS.CREATE_ONBOARDING_SUBSCRIPTION_SESSION,
+      {
         ...dto,
-        organizationId,
-        userId: user.id,
-      }),
+        userId,
+      },
     );
+  }
+
+  getPlans() {
+    return rpcSend(this.client, SUBSCRIPTION_PATTERNS.GET_PLANS, {});
+  }
+
+  async getMySubscription(userId: string) {
+    try {
+      return await rpcSend(this.client, SUBSCRIPTION_PATTERNS.GET_BY_USER, {
+        userId,
+      });
+    } catch (error: any) {
+      const code = error?.code ?? error?.error?.code ?? error?.response?.code;
+      if (code === SubscriptionErrorCode.SUBSCRIPTION_NOT_FOUND) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  getMySubscriptionHistory(userId: string) {
+    return rpcSend(this.client, SUBSCRIPTION_PATTERNS.GET_MY_HISTORY, {
+      userId,
+    });
+  }
+
+  changePlan(id: string, userId: string, plan: SubscriptionPlan) {
+    return rpcSend(this.client, SUBSCRIPTION_PATTERNS.CHANGE_PLAN, {
+      id,
+      userId,
+      plan,
+    });
+  }
+
+  cancel(id: string, userId: string) {
+    return rpcSend(this.client, SUBSCRIPTION_PATTERNS.CANCEL, { id, userId });
+  }
+
+  resume(id: string, userId: string) {
+    return rpcSend(this.client, SUBSCRIPTION_PATTERNS.RESUME, { id, userId });
   }
 }

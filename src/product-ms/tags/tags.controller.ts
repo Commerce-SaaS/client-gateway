@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { TagsService } from './tags.service';
@@ -23,16 +24,15 @@ import { ApiFindOnePublicResponse } from 'src/common/decorators/swagger/api-find
 import { ApiFindAllPublicResponse } from 'src/common/decorators/swagger/api-find-all-public-response.decorator';
 import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-response.decorator';
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
-import { PlatformAuth } from 'src/common/decorators/platform-auth.decorator';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
 
+@ApiTags('Tags')
 @Controller('tags')
 export class TagsController {
   constructor(private readonly service: TagsService) {}
 
   @Post()
   @ApiCreateResponse(CreateTagDto)
-  @PlatformAuth(PlatformRolesEnum.STAFF)
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
   create(@Body() dto: CreateTagDto, @User() user: CurrentUserContext) {
     return this.service.create(dto, user.organizationId);
@@ -58,7 +58,6 @@ export class TagsController {
 
   @Patch(':id')
   @ApiUpdateResponse(UpdateTagDto)
-  @PlatformAuth(PlatformRolesEnum.STAFF)
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,7 +69,6 @@ export class TagsController {
 
   @Patch(':id/soft-delete')
   @ApiSoftDeleteResponse('Tag')
-  @PlatformAuth(PlatformRolesEnum.STAFF)
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
   remove(
     @Param('id', ParseUUIDPipe) id: string,
@@ -81,7 +79,6 @@ export class TagsController {
 
   @Patch(':id/restore')
   @ApiRestoreResponse('Tag')
-  @PlatformAuth(PlatformRolesEnum.STAFF)
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
   restore(
     @Param('id', ParseUUIDPipe) id: string,

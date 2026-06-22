@@ -8,12 +8,61 @@ import {
   Length,
   IsEnum,
   IsObject,
+  IsInt,
+  IsBoolean,
+  IsHexColor,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { ProductAvailability } from 'src/common/enums/product-availability.enum';
-import { CreateProductExtraDto } from './create-product-extra.dto';
-import { CreateProductIngredientDto } from './create-product-ingredient.dto';
-import { CreateProductTagDto } from './create-product-tag.dto';
+
+class ProductUiDto {
+  @ApiPropertyOptional({
+    description:
+      'Background color for the product card in the POS (overrides category color)',
+    example: '#FF6B6B',
+  })
+  @IsOptional()
+  @IsHexColor()
+  backgroundColor?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Text color for the product card in the POS (overrides category color)',
+    example: '#FFFFFF',
+  })
+  @IsOptional()
+  @IsHexColor()
+  textColor?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Badge text displayed on the product card (e.g. "New", "Popular")',
+    example: 'Popular',
+  })
+  @IsOptional()
+  @IsString()
+  badge?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Highlight the product in the POS with a special border or glow',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  highlight?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Visual sort order within the category in the POS',
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
 
 export class CreateProductDto {
   @ApiProperty({
@@ -43,6 +92,34 @@ export class CreateProductDto {
   @IsNumber()
   @Min(0)
   stock?: number;
+
+  @ApiPropertyOptional({
+    description: 'Units of this product currently reserved by pending orders',
+    example: 5,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  reservedStock?: number;
+
+  @ApiPropertyOptional({
+    description: 'Stock level at which a low-stock alert should be triggered',
+    example: 10,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  lowStockThreshold?: number;
+  @ApiPropertyOptional({
+    description:
+      'Whether stock should be tracked and decremented for this product',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  trackStock?: boolean;
 
   @ApiPropertyOptional({
     description: 'Availability status of the product',
@@ -77,6 +154,15 @@ export class CreateProductDto {
   @IsString()
   imageKey?: string;
 
+  @ApiPropertyOptional({
+    description: 'UI customization for the product card in the POS',
+    type: ProductUiDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProductUiDto)
+  ui?: ProductUiDto;
+
   // Relationships
   @ApiPropertyOptional({
     description: 'UUID of the category this product belongs to',
@@ -108,11 +194,58 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     description: 'Array of ingredients with their quantities',
-    example: [{ ingredientId: 'f6f62db9-8d4d-4d1d-af8b-51afb0a4dcc2', quantity: 2 }],
+    example: [
+      { ingredientId: 'f6f62db9-8d4d-4d1d-af8b-51afb0a4dcc2', quantity: 2 },
+    ],
     type: [Object],
   })
   @IsOptional()
   @IsArray()
   @IsObject({ each: true })
   ingredients?: CreateProductIngredientDto[];
+}
+
+export class CreateProductExtraDto {
+  @ApiProperty({
+    description: 'UUID of the extra to add to the product',
+    example: 'd4f62db9-8d4d-4d1d-af8b-51afb0a4dcc2',
+  })
+  @IsUUID()
+  extraId: string;
+}
+
+export class CreateProductIngredientDto {
+  @ApiPropertyOptional({
+    description:
+      'UUID of the product to which the ingredient is added (optional)',
+    example: '3ce207fb-0b94-4316-aeef-dca14d36faee',
+  })
+  @IsOptional()
+  @IsUUID()
+  productId?: string;
+
+  @ApiProperty({
+    description: 'UUID of the ingredient to add to the product',
+    example: 'd4f62db9-8d4d-4d1d-af8b-51afb0a4dcc2',
+  })
+  @IsUUID()
+  ingredientId: string;
+
+  @ApiProperty({
+    description: 'Quantity of this ingredient for the product (minimum 1)',
+    example: 1,
+    minimum: 1,
+  })
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
+
+export class CreateProductTagDto {
+  @ApiProperty({
+    description: 'UUID of the tag to associate with the product',
+    example: 'd4f62db9-8d4d-4d1d-af8b-51afb0a4dcc2',
+  })
+  @IsUUID()
+  tagId: string;
 }

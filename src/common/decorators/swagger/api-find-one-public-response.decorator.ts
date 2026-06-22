@@ -1,12 +1,12 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiHeader,
   ApiParam,
   ApiOperation,
   ApiResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiInternalServerErrorResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 
 export const ApiFindOnePublicResponse = (entityName: string) =>
@@ -22,6 +22,17 @@ export const ApiFindOnePublicResponse = (entityName: string) =>
     }),
 
     ApiOperation({ summary: `Get ${entityName} by id (public) ` }),
+
+    ApiHeader({
+      name: 'x-organization-id',
+      required: true,
+      description: 'Organization context ID',
+      schema: {
+        type: 'string',
+        format: 'uuid',
+        example: '11111111-2222-3333-4444-555555555555',
+      },
+    }),
 
     ApiResponse({
       status: 200,

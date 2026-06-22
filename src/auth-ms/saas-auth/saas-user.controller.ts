@@ -5,24 +5,25 @@ import {
   Body,
   Patch,
   UseGuards,
-  Res,
-  Headers,
+  Delete,
+  Param,
+  SetMetadata,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { RegisterUserDto } from '../shared/dto/register-user.dto';
 import { LoginDto } from '../shared/dto/login.dto';
 import { UpdateUserDto } from '../shared/dto/update-user.dto';
 import { ChangePasswordDto } from '../shared/dto/change-password.dto';
-import { AuthSessionGuard } from 'src/common/guards/auth-session.guard';
-import { Token } from 'src/common/decorators/token.decorator';
+import { AUTH_AUDIENCE_KEY, AuthSessionGuard } from 'src/common/guards/auth-session.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { ApiRegisterUser } from '../shared/decorators/api-register-user.decorator';
 import { ApiLoginUser } from '../shared/decorators/api-login-user.decorator';
 import { ApiLogoutUser } from '../shared/decorators/api-logout-user.decorator';
 import { ApiLogoutAllUsers } from '../shared/decorators/api-logout-all-users.decorator';
 import { ApiRefreshToken } from '../shared/decorators/api-refresh-token.decorator';
-import { CurrentUserContext } from 'src/common/interfaces/current-user-context.type';
+import { AuthenticatedUser } from 'src/common/interfaces/current-user-context.type';
 import { RefreshTokenDto } from '../shared/dto/refresh-token.dto';
 import { ApiGetMe } from '../shared/decorators/api-get-user.decorator';
 import { ApiUpdateMe } from '../shared/decorators/api-update-me.decorator';
@@ -34,9 +35,20 @@ import { ApiResetPassword } from '../shared/decorators/api-reset-password.decora
 import { ApiDeactivateMe } from '../shared/decorators/api-deactivate-me.decorator';
 import { ApiReactivateMe } from '../shared/decorators/api-reactivate-me.decorator';
 import { SaaSUserService } from './saas-user.service';
-import { GoogleAuthDto } from '../shared/dto/google-auth.dto';
 import { ApiGoogleLogin } from '../shared/decorators/api-google-login.decorator';
-import { sendAuthResponse } from '../shared/utils/auth';
+import { VerifyEmailDto } from '../shared/dto/verify-email.dto';
+import { ApiVerifyEmail } from '../shared/decorators/api-verify-email-response.decorator';
+import { ResendVerificationDto } from '../shared/dto/resend-verification.dto';
+import { ApiResendVerification } from '../shared/decorators/api-resend-verification.decorator';
+import { Jti } from 'src/common/decorators/jti.decorator';
+import { GoogleAuthDto } from './dto/google-auth.dto';
+import { ClientInfo } from './decorators/client-info.decorator';
+import { ApiListSessions } from '../shared/decorators/api-list-sessions.decorator';
+import { ApiRevokeSession } from '../shared/decorators/api-revoke-session.decorator';
+import { ChangeEmailConfirmDto } from './dto/change-email-confirm.dto';
+import { ChangeEmailRequestDto } from './dto/change-email-request.dto';
+import { ApiRequestEmailChange } from '../shared/decorators/api-request-email-change.decorator';
+import { ApiConfirmEmailChange } from '../shared/decorators/api-confirm-email-change.decorator';
 
 /**
  * SaaS User Authentication Controller
@@ -53,161 +65,164 @@ import { sendAuthResponse } from '../shared/utils/auth';
  * - Customer identities are isolated in their own domain.
  */
 
-@Controller('saas/users')
+@ApiTags('Auth - SaaS')
+@SetMetadata(AUTH_AUDIENCE_KEY, ['saas'])
+@Controller('saas')
 export class SaaSUserController {
   constructor(private readonly saaSUserService: SaaSUserService) {}
 
-  @Post('register')
+  @Post('users/register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiRegisterUser()
-  async register(
-    @Body() registerUserDto: RegisterUserDto,
-    @Res({ passthrough: true }) res: Response,
-    @Headers('x-client-type') clientType?: string,
-  ) {
-    console.log('Registering user with data:', registerUserDto);
-    const { user, tokens } =
-      await this.saaSUserService.register(registerUserDto);
-    return sendAuthResponse(
-      res,
-      user,
-      tokens.accessToken,
-      tokens.refreshToken,
-      (clientType as 'web' | 'mobile') || 'web',
-    );
+  async register(@Body() registerUserDto: RegisterUserDto) {
+    return await this.saaSUserService.register(registerUserDto);
   }
 
-  @Post('login')
+  @Post('users/verify-email')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiVerifyEmail()
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.saaSUserService.verifyEmail(dto);
+  }
+
+  @Post('users/resend-verification')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiResendVerification()
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.saaSUserService.resendVerification(dto);
+  }
+
+  @Post('users/login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiLoginUser()
   async login(
     @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) res: Response,
-    @Headers('x-client-type') clientType?: string,
+    @ClientInfo() clientInfo: ClientInfo,
   ) {
-    console.log(loginDto);
-    const { user, tokens } = await this.saaSUserService.login(loginDto);
-    return sendAuthResponse(
-      res,
-      user,
-      tokens.accessToken,
-      tokens.refreshToken,
-      (clientType as 'web' | 'mobile') || 'web',
-    );
+    return this.saaSUserService.login(loginDto, clientInfo);
+  }
+
+  @Post('users/refresh')
+  @ApiRefreshToken()
+  refresh(
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @ClientInfo() clientInfo: ClientInfo,
+  ) {
+    return this.saaSUserService.refreshToken(refreshTokenDto, clientInfo);
   }
 
   @UseGuards(AuthSessionGuard)
-  @Post('logout')
+  @Post('users/logout')
   @ApiLogoutUser()
-  async logout(@Token() token: string) {
-    return this.saaSUserService.logout(token);
+  async logout(@User() user: AuthenticatedUser, @Jti() jti: string) {
+    return this.saaSUserService.logout(jti, user.id);
   }
 
   @UseGuards(AuthSessionGuard)
-  @Post('logout-all')
+  @Post('users/logout-all')
   @ApiLogoutAllUsers()
-  async logoutAllSessions(@User() user: CurrentUserContext) {
+  async logoutAllSessions(@User() user: AuthenticatedUser) {
     return this.saaSUserService.logoutAll(user.id);
   }
 
-  @Post('refresh')
-  @ApiRefreshToken()
-  refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.saaSUserService.refreshToken(refreshTokenDto);
-  }
-
-  @Post('forgot-password')
-  @ApiForgotPassword()
-  forgotPassword(@Body() dto: ForgotPasswordDto) {
-    return this.saaSUserService.forgotPassword(dto);
-  }
-
-  @Post('reset-password')
-  @ApiResetPassword()
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.saaSUserService.resetPassword(dto);
-  }
-
-  
   @UseGuards(AuthSessionGuard)
-  @Get('me')
+  @Get('users/me')
   @ApiGetMe()
-  getProfile(@User() user: CurrentUserContext) {
+  getProfile(@User() user: AuthenticatedUser) {
     return this.saaSUserService.getProfile(user.id);
   }
 
   @UseGuards(AuthSessionGuard)
-  @Patch('me')
+  @Patch('users/me')
   @ApiUpdateMe()
   updateProfile(
-    @User() user: CurrentUserContext,
+    @User() user: AuthenticatedUser,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.saaSUserService.updateProfile(user.id, updateUserDto);
   }
 
   @UseGuards(AuthSessionGuard)
-  @Patch('me/password')
+  @Patch('users/me/password')
   @ApiChangeMyPassword()
   changePassword(
-    @User() user: CurrentUserContext,
-    @Body() changePasswordDto: ChangePasswordDto,
+    @User() user: AuthenticatedUser,
+    @Jti() jti: string,
+    @Body() dto: ChangePasswordDto,
   ) {
-    return this.saaSUserService.changePassword(user.id, changePasswordDto);
+    return this.saaSUserService.changePassword(user.id, jti, dto);
   }
 
   @UseGuards(AuthSessionGuard)
-  @Patch('me/deactivate')
+  @Patch('users/me/deactivate')
   @ApiDeactivateMe()
-  softDelete(@User() user: CurrentUserContext) {
-    return this.saaSUserService.deleteAcount(user.id);
+  softDelete(@User() user: AuthenticatedUser) {
+    return this.saaSUserService.deactivate(user.id);
   }
 
-  @Patch('me/restore')
+  @Patch('users/me/restore')
   @ApiReactivateMe()
   restoreUser(@Body() loginDto: LoginDto) {
     return this.saaSUserService.restoreAcount(loginDto);
   }
 
+  @Post('users/forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiForgotPassword()
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.saaSUserService.forgotPassword(dto);
+  }
 
-  //TODO: Implement account deletion and restoration flows with proper email verification and security measures.
-  // @Delete('me')
-  // @ApiDeleteMe()
-  // delete(@Body() dto: any) {
-  //   return this.customerService.delete(dto);
-  // }
+  @Post('users/reset-password')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiResetPassword()
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.saaSUserService.resetPassword(dto);
+  }
 
-  // @Patch('email')
-  // @ApiReactivateMe()
-  // updateEmail(@Body() dto: any) {
-  //   return this.customerService.updateEmail(dto);
-  // }
-
-  // @Patch('email/verify')
-  // @ApiReactivateMe()
-  // verifyEmail(@Body() dto: any) {
-  //   return this.customerService.verifyEmail(loginDto);
-  // }
-
-  // @Patch('email/resend-verification')
-  // @ApiReactivateMe()
-  // resendVerificationEmail(@Body() dto: any) {
-  //   return this.customerService.resendVerificationEmail(loginDto);
-  // }
-
-  @Post('oauth/google')
+  @Post('users/oauth/google')
   @ApiGoogleLogin()
   async googleLogin(
     @Body() dto: GoogleAuthDto,
-    @Res({ passthrough: true }) res: Response,
-    @Headers('x-client-type') clientType?: string,
+    @ClientInfo() clientInfo: ClientInfo,
   ) {
-    const { user, tokens } = await this.saaSUserService.googleLogin(dto);
+    return this.saaSUserService.googleLogin(dto, clientInfo);
+  }
 
-    return sendAuthResponse(
-      res,
-      user,
-      tokens.accessToken,
-      tokens.refreshToken,
-      (clientType as 'web' | 'mobile') || 'web',
-    );
+  @UseGuards(AuthSessionGuard)
+  @Get('users/me/sessions')
+  @ApiListSessions()
+  listSessions(@User() user: AuthenticatedUser, @Jti() jti: string) {
+    return this.saaSUserService.listSessions(user.id, jti);
+  }
+
+  @UseGuards(AuthSessionGuard)
+  @Delete('users/me/sessions/:jti')
+  @ApiRevokeSession()
+  revokeSession(@User() user: AuthenticatedUser, @Param('jti') jti: string) {
+    return this.saaSUserService.revokeSession(user.id, jti);
+  }
+
+  @UseGuards(AuthSessionGuard)
+  @Post('users/me/change-email/request')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiRequestEmailChange()
+  requestEmailChange(
+    @User() user: AuthenticatedUser,
+    @Body() dto: ChangeEmailRequestDto,
+  ) {
+    return this.saaSUserService.requestEmailChange(user.id, dto);
+  }
+
+  @UseGuards(AuthSessionGuard)
+  @Post('users/me/change-email/confirm')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiConfirmEmailChange()
+  confirmEmailChange(
+    @User() user: AuthenticatedUser,
+    @Jti() jti: string,
+    @Body() dto: ChangeEmailConfirmDto,
+  ) {
+    return this.saaSUserService.confirmEmailChange(user.id, jti, dto);
   }
 }
