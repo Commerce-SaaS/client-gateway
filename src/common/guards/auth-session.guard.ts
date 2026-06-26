@@ -29,7 +29,7 @@ export class AuthSessionGuard implements CanActivate {
     const token =
       request.cookies?.accessToken || this.extractTokenFromHeader(request);
     if (!token) {
-      throw new UnauthorizedException('Token not found');
+      throw new UnauthorizedException({ message: 'Token not found', code: 'TOKEN_MISSING' });
     }
 
     try {
@@ -38,7 +38,7 @@ export class AuthSessionGuard implements CanActivate {
       });
 
       if (!payload.jti) {
-        throw new UnauthorizedException('Invalid token');
+        throw new UnauthorizedException({ message: 'Invalid token', code: 'TOKEN_INVALID' });
       }
 
       // Validate audience if the route requires a specific one
@@ -55,12 +55,12 @@ export class AuthSessionGuard implements CanActivate {
           : [];
 
       if (allowedAudiences.length > 0 && !allowedAudiences.includes(payload.aud)) {
-        throw new UnauthorizedException('Invalid token audience');
+        throw new UnauthorizedException({ message: 'Invalid token audience', code: 'TOKEN_AUDIENCE_INVALID' });
       }
 
       const session = await this.redis.get(`session:${payload.jti}`);
       if (!session) {
-        throw new UnauthorizedException('Session expired or invalidated');
+        throw new UnauthorizedException({ message: 'Session expired or invalidated', code: 'SESSION_INVALIDATED' });
       }
 
       const user: AuthenticatedUser = {
@@ -74,7 +74,10 @@ export class AuthSessionGuard implements CanActivate {
       request.jti = payload.jti;
     } catch (e) {
       if (e instanceof UnauthorizedException) throw e;
-      throw new UnauthorizedException('Invalid or expired token');
+      if (e?.name === 'TokenExpiredError') {
+        throw new UnauthorizedException({ message: 'Token has expired', code: 'TOKEN_EXPIRED' });
+      }
+      throw new UnauthorizedException({ message: 'Invalid token', code: 'TOKEN_INVALID' });
     }
 
     return true;

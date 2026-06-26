@@ -1,5 +1,5 @@
 import { ServiceUnavailableException } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom, timeout, catchError, throwError } from 'rxjs';
 import { TimeoutError } from 'rxjs';
 
@@ -23,7 +23,7 @@ export function rpcSend<T = any>(
               ),
           );
         }
-        return throwError(() => err);
+        return throwError(() => new RpcException(err));
       }),
     ),
   );

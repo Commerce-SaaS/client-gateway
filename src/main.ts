@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import { envs } from './config';
-import { RpcCustomExceptionFilter } from './common';
+import { HttpExceptionFilter, RpcCustomExceptionFilter } from './common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import Redis from 'ioredis';
@@ -88,7 +88,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  app.useGlobalFilters(new RpcCustomExceptionFilter());
+  app.useGlobalFilters(new RpcCustomExceptionFilter(), new HttpExceptionFilter());
 
   // ─── Dashboard API (/api/docs) ───────────────────────────────────────────────
   const dashboardConfig = new DocumentBuilder()

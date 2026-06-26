@@ -24,15 +24,21 @@ export class RpcCustomExceptionFilter implements ExceptionFilter {
       'statusCode' in rpcError &&
       'message' in rpcError
     ) {
-      const { statusCode, message } = rpcError as {
+      const { statusCode, message, code } = rpcError as {
         statusCode: number | string;
         message: string;
+        code: string;
       };
       const httpStatus = isNaN(+statusCode) ? 400 : +statusCode;
-      return response.status(httpStatus).json({ statusCode: httpStatus, message });
+      return response.status(httpStatus).json({ statusCode: httpStatus, message, code });
     }
 
-    this.logger.error(`Unhandled RPC error: ${JSON.stringify(rpcError)}`);
+    // [ORDER-FLOW] This branch is the last stop before a 500. The full rpcError
+    // shape is logged here so the real cause is visible even when not an RpcException.
+    this.logger.error(
+      `[ORDER-FLOW] Unhandled RPC error — typeof=${typeof rpcError} shape=${JSON.stringify(rpcError)}`,
+      rpcError instanceof Error ? rpcError.stack : undefined,
+    );
     return response.status(500).json({
       statusCode: 500,
       message: 'Internal server error',

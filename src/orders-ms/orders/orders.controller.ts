@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -28,6 +29,8 @@ import { ApiFindAllOrdersResponse } from './decorators/api-find-all-orders-respo
 @ApiTags('Orders')
 @Controller('orders')
 export class OrdersController {
+  private readonly logger = new Logger(OrdersController.name);
+
   constructor(private readonly service: OrdersService) {}
 
   @Post()
@@ -38,6 +41,9 @@ export class OrdersController {
     ['customer', 'saas'],
   )
   create(@Body() dto: CreateOrderDto, @User() user: CurrentUserContext) {
+    this.logger.log(
+      `[ORDER-FLOW] gateway create-order: userId=${user.id} organizationId=${user.organizationId} itemCount=${dto.items?.length ?? 0}`,
+    );
     return this.service.create(dto, user);
   }
 

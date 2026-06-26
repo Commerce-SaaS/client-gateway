@@ -95,7 +95,7 @@ export class CustomersController {
     [OrganizationRole.STAFF],
     ['saas'],
   )
-  @Patch('deactivate/:id')
+  @Patch(':id/deactivate')
   @ApiDeactivateCustomer()
   softDelete(
     @Param('id', ParseUUIDPipe) id: string,
@@ -109,7 +109,7 @@ export class CustomersController {
     [OrganizationRole.STAFF],
     ['saas'],
   )
-  @Patch('delete-account/:id')
+  @Patch(':id/delete-account')
   @ApiDeleteCustomer()
   delete(
     @Param('id', ParseUUIDPipe) id: string,
@@ -123,7 +123,7 @@ export class CustomersController {
     [OrganizationRole.STAFF],
     ['saas'],
   )
-  @Patch('restore/:id')
+  @Patch(':id/restore')
   @ApiReactivateCustomer()
   restore(
     @Param('id', ParseUUIDPipe) id: string,
