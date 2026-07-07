@@ -26,6 +26,7 @@ import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-re
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
 import { PublicTenant } from 'src/common/decorators/public-tenant.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('Products')
 @Controller('products')
@@ -40,16 +41,19 @@ export class ProductsController {
   }
 
   @Get()
+  @SkipThrottle()
   @PublicTenant()
   @ApiFindAllProducts()
   findAll(
     @Query() paginationProductDto: PaginationProductDto,
     @OrganizationId() organizationId: string,
   ) {
+    console.log({paginationProductDto, organizationId})
     return this.service.findAll(paginationProductDto, organizationId);
   }
 
   @Get(':id')
+  @SkipThrottle()
   @PublicTenant()
   @ApiFindOnePublicResponse('Product')
   findOne(

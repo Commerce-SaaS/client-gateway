@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Min,
   ValidateNested,
@@ -63,6 +64,13 @@ export class CreateTagDto {
   @IsString()
   @Length(1, 100)
   name: string;
+
+  @ApiProperty({
+    description: 'Category the tag belongs to',
+    example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  })
+  @IsUUID()
+  categoryId: string;
 
   @ApiPropertyOptional({
     description: 'UI customization for the tag card in the POS',

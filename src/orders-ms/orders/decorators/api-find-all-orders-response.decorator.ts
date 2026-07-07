@@ -8,6 +8,7 @@ import {
   ApiBearerAuth,
   ApiHeader,
 } from '@nestjs/swagger';
+import { OrderStatus } from 'src/common/enums/order-status.enum';
 
 const paginatedOrdersSchema = {
   type: 'object',
@@ -109,6 +110,14 @@ export const ApiFindAllOrdersResponse = (entityName: string) =>
       type: String,
       description: 'Free text search by order fields',
       example: 'pizza',
+    }),
+
+    ApiQuery({
+      name: 'status',
+      required: false,
+      enum: OrderStatus,
+      description: 'Order status',
+      example: 'PENDING',
     }),
     ApiOperation({ summary: `Get all ${entityName}` }),
     ApiHeader({

@@ -21,14 +21,14 @@ export class CreatePaymentMethodDto {
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Optional description of the payment method',
-    example: 'Pago mediante ticket restaurant',
-    maxLength: 200,
+    description: 'Optional icon for the payment method',
+    example: 'ticket-restaurant',
+    maxLength: 100,
   })
   @IsOptional()
   @IsString()
-  @Length(0, 200)
-  description?: string;
+  @Length(0, 100)
+  icon?: string;
 
   @ApiPropertyOptional({
     description: 'Whether the payment method is active and available for use',

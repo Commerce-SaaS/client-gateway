@@ -12,7 +12,7 @@ import { CancelPaymentDto } from './dto/cancel-payment.dto';
 
 @Injectable()
 export class PaymentService {
-  constructor(@Inject(PAYMENT_SERVICE) private readonly client: ClientProxy) {}
+  constructor(@Inject(PAYMENT_SERVICE) private readonly client: ClientProxy) { }
 
   async createPaymentSession(
     dto: CreatePaymentSessionDto,
@@ -74,6 +74,13 @@ export class PaymentService {
     });
   }
 
+  update(id: string, dto: UpdatePaymentDto, organizationId: string) {
+    return rpcSend(this.client, PAYMENT_PATTERNS.UPDATE, {
+      id,
+      organizationId,
+      ...dto,
+    });
+  }
   cancel(id: string, dto: CancelPaymentDto, organizationId: string) {
     return rpcSend(this.client, PAYMENT_PATTERNS.CANCEL, {
       id,

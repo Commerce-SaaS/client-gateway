@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -22,12 +23,23 @@ import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { ApiFindOneResponse } from 'src/common/decorators/swagger/api-find-one-response.decorator';
 import { OrdersPaginationDto } from './dto/orders-pagination.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { ApiUpdateResponse } from 'src/common/decorators/swagger/api-update-response.decorator';
+import { ApiUpdateOrderResponse } from './decorators/api-update-order-response.decorator';
 import { ApiFindMyOrdersResponse } from './decorators/api-find-my-orders-response.decorator';
 import { ApiFindAllOrdersResponse } from './decorators/api-find-all-orders-response.decorator';
+import { CreateOrderItemDto } from './dto/create-order-item.dto';
+import { UpdateOrderItemDto } from './dto/update-order-item.dto';
+import { ApiAddOrderItemResponse } from './decorators/api-add-order-item-response.decorator';
+import { ApiRemoveOrderItemResponse } from './decorators/api-remove-order-item-response.decorator';
+import { ApiUpdateOrderItemResponse } from './decorators/api-update-order-item-response.decorator';
+import { ApiCreatePosOrderResponse } from './decorators/api-create-pos-order-response.decorator';
+import { CreatePosOrderDto } from './dto/create-pos-order.dto';
+import { ApiSendToKitchenResponse } from './decorators/api-send-to-kitchen-response.decorator';
+import { ApiMarkItemPreparedResponse } from './decorators/api-mark-item-prepared-response.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('Orders')
 @Controller('orders')
+@SkipThrottle()
 export class OrdersController {
   private readonly logger = new Logger(OrdersController.name);
 
@@ -45,6 +57,16 @@ export class OrdersController {
       `[ORDER-FLOW] gateway create-order: userId=${user.id} organizationId=${user.organizationId} itemCount=${dto.items?.length ?? 0}`,
     );
     return this.service.create(dto, user);
+  }
+
+  @Post('pos')
+  @ApiCreatePosOrderResponse()
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  createPosOrder(
+    @Body() dto: CreatePosOrderDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.createPosOrder(dto, organizationId);
   }
 
   @Get('me')
@@ -76,7 +98,7 @@ export class OrdersController {
     @User() user: CurrentUserContext,
     @OrganizationId() organizationId: string,
   ) {
-    return this.service.findOne({id, organizationId, userId: user.id});
+    return this.service.findOne({ id, organizationId, userId: user.id });
   }
 
   @Get()
@@ -96,11 +118,11 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @OrganizationId() organizationId: string,
   ) {
-    return this.service.findOne({id, organizationId});
+    return this.service.findOne({ id, organizationId });
   }
 
   @Patch(':id')
-  @ApiUpdateResponse(UpdateOrderDto)
+  @ApiUpdateOrderResponse()
   @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -108,5 +130,64 @@ export class OrdersController {
     @OrganizationId() organizationId: string,
   ) {
     return this.service.update(id, updateData, organizationId);
+  }
+
+  // ─── Item endpoints ────────────────────────────────────────────────────────
+
+  @Post(':id/items')
+  @ApiAddOrderItemResponse()
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  addItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateOrderItemDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.addItem(id, dto, organizationId);
+  }
+
+  @Delete(':id/items/:itemId')
+  @ApiRemoveOrderItemResponse()
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  removeItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.removeItem(id, itemId, organizationId);
+  }
+
+  // Declared before PATCH :id/items/:itemId so the literal segment
+  // "send-to-kitchen" is not swallowed by the :itemId param matcher.
+  @Patch(':id/items/send-to-kitchen')
+  @ApiSendToKitchenResponse()
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  sendToKitchen(
+    @Param('id', ParseUUIDPipe) id: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.sendToKitchen(id, organizationId);
+  }
+
+  @Patch(':id/items/:itemId/prepared')
+  @ApiMarkItemPreparedResponse()
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  markItemPrepared(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.markItemPrepared(id, itemId, organizationId);
+  }
+
+  @Patch(':id/items/:itemId')
+  @ApiUpdateOrderItemResponse()
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  updateOrderItem(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() dto: UpdateOrderItemDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.updateOrderItem(id, itemId, dto, organizationId);
   }
 }

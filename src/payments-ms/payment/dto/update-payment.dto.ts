@@ -1,25 +1,11 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreatePaymentDto } from './create-payment.dto';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsUUID } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
-  COMPLETED = 'COMPLETED',
-  PAID = 'PAID',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
-  EXPIRED = 'EXPIRED',
-  CANCELED = 'CANCELED',
-}
-
-export class UpdatePaymentDto extends PartialType(CreatePaymentDto) {
-  
-  @IsOptional()
-  @IsEnum(PaymentStatus)
-  status?: PaymentStatus;
-
-  @IsOptional()
-  @IsString()
-  provider?: string | undefined;
+export class UpdatePaymentDto {
+  @ApiProperty({
+    description: 'Payment Method id to reassign this payment to',
+    example: '01d2acaa-5a3b-404a-9471-41b060895b18',
+  })
+  @IsUUID()
+  paymentMethodId: string;
 }

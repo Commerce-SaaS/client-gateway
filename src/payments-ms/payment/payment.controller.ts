@@ -33,7 +33,7 @@ import { ApiCancelPaymentResponse } from './decorators/api-cancel-payment-respon
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(private readonly paymentService: PaymentService) { }
 
   @Post('manual')
   @ApiCreatePaymentManualResponse(CreatePaymentDto)
@@ -107,6 +107,17 @@ export class PaymentController {
     @OrganizationId() organizationId: string,
   ) {
     return this.paymentService.findOne(id, organizationId);
+  }
+
+  @Patch(':id')
+  @ApiUpdatePaymentResponse(UpdatePaymentDto)
+  @PlatformOrganizationAuth([PlatformRolesEnum.STAFF], [OrganizationRole.STAFF])
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePaymentDto,
+    @OrganizationId() orgId: string,
+  ) {
+    return this.paymentService.update(id, dto, orgId);
   }
 
   @Patch(':id/cancel')

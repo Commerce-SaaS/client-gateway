@@ -25,7 +25,9 @@ export const ApiUpdatePaymentResponse = <TModel extends Type<any>>(
       schema: { type: 'string', format: 'uuid', example: 'fe63ca54-fe64-4e46-a57e-2894374c1ee5' },
     }),
     ApiBody({ type: model }),
-    ApiOperation({ summary: 'Update an existing payment' }),
+    ApiOperation({
+      summary: 'Reassign the payment method of an existing payment',
+    }),
     ApiHeader({
       name: 'x-organization-id',
       required: true,
@@ -63,7 +65,7 @@ export const ApiUpdatePaymentResponse = <TModel extends Type<any>>(
       description: 'Validation error',
       schema: {
         example: {
-          message: ['status must be a valid enum value', 'failureReason must be a valid enum value'],
+          message: ['paymentMethodId must be a UUID'],
           statusCode: 400,
           error: 'Bad Request',
         },

@@ -25,6 +25,7 @@ import { ApiFindAllPublicResponse } from 'src/common/decorators/swagger/api-find
 import { ApiRestoreResponse } from 'src/common/decorators/swagger/api-restore-response.decorator';
 import { PlatformRolesEnum } from 'src/common/enums/platform-roles.enum';
 import { PlatformOrganizationAuth } from 'src/common/decorators/platform-organization-auth.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('Tags')
 @Controller('tags')
@@ -39,6 +40,7 @@ export class TagsController {
   }
 
   @Get()
+  @SkipThrottle()
   @ApiFindAllPublicResponse('Tag')
   findAll(
     @Query() paginationDto: PaginationDto,
@@ -48,6 +50,7 @@ export class TagsController {
   }
 
   @Get(':id')
+  @SkipThrottle()
   @ApiFindOnePublicResponse('Tag')
   findOne(
     @Param('id', ParseUUIDPipe) id: string,
