@@ -25,6 +25,8 @@ import { IngredientsModule } from './product-ms/ingredients/ingredients.module';
 import { CategoriesModule } from './product-ms/categories/categories.module';
 import { ProductsModule } from './product-ms/products/products.module';
 import { OrdersModule } from './orders-ms/orders/orders.module';
+import { TablesModule } from './orders-ms/tables/tables.module';
+import { SectorsModule } from './orders-ms/sectors/sectors.module';
 import { SaaSUserModule } from './auth-ms/saas-auth/saas-user.module';
 import { CustomerModule } from './auth-ms/customer-auth/customer.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
@@ -95,6 +97,8 @@ import { APP_GUARD } from '@nestjs/core';
     PaymentModule,
     WebhooksModule,
     OrdersModule,
+    TablesModule,
+    SectorsModule,
     StripeModule,
     CustomersModule,
     PaymentMethodsModule,

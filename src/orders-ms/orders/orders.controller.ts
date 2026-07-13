@@ -35,6 +35,7 @@ import { ApiCreatePosOrderResponse } from './decorators/api-create-pos-order-res
 import { CreatePosOrderDto } from './dto/create-pos-order.dto';
 import { ApiSendToKitchenResponse } from './decorators/api-send-to-kitchen-response.decorator';
 import { ApiMarkItemPreparedResponse } from './decorators/api-mark-item-prepared-response.decorator';
+import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
 import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('Orders')
@@ -99,6 +100,21 @@ export class OrdersController {
     @OrganizationId() organizationId: string,
   ) {
     return this.service.findOne({ id, organizationId, userId: user.id });
+  }
+
+  // Declared before GET :id so the literal segment "available-slots" is not
+  // swallowed by the :id param matcher.
+  @Get('available-slots')
+  @PlatformOrganizationAuth(
+    [PlatformRolesEnum.STAFF, PlatformRolesEnum.CUSTOMER],
+    [OrganizationRole.STAFF, OrganizationRole.CUSTOMER],
+    ['customer', 'saas'],
+  )
+  getAvailableSlots(
+    @Query() dto: GetAvailableSlotsDto,
+    @OrganizationId() organizationId: string,
+  ) {
+    return this.service.getAvailableSlots(dto, organizationId);
   }
 
   @Get()

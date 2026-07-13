@@ -6,8 +6,9 @@ import {
   IsOptional,
   IsNumber,
   IsString,
+  IsDate,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CreateOrderItemDto } from 'src/orders-ms/orders/dto/create-order-item.dto';
 
 export class CreateOrderDto {
@@ -18,6 +19,16 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   customerName?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Future date/time to schedule this order for (must land exactly on a valid slot — see GET /orders/available-slots). Omit for "now".',
+    example: '2026-07-15T12:30:00.000Z',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  scheduledFor?: Date;
 
   @ApiProperty({
     description: 'List of items included in the order',

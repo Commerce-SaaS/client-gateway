@@ -13,15 +13,48 @@ import { FindOneByOrgDto } from './dto/find-one-by-org.dto';
 import { CreateOrderItemDto } from './dto/create-order-item.dto';
 import { UpdateOrderItemDto } from './dto/update-order-item.dto';
 import { CreatePosOrderDto } from './dto/create-pos-order.dto';
+import { GetAvailableSlotsDto } from './dto/get-available-slots.dto';
+import { ProductsService } from 'src/product-ms/products/product.service';
 
 @Injectable()
 export class OrdersService {
-  constructor(@Inject(ORDERS_SERVICE) private readonly client: ClientProxy) {}
+  constructor(
+    @Inject(ORDERS_SERVICE) private readonly client: ClientProxy,
+    private readonly productsService: ProductsService,
+  ) {}
 
-  create(dto: CreateOrderDto, user: CurrentUserContext) {
+  // Resolves each item's countsTowardKitchenCapacity snapshot from its
+  // product's category before the order is forwarded to orders-ms (which has
+  // no dependency on product-ms). Defaults to true (conservative) when a
+  // product/category can't be resolved.
+  private async resolveKitchenCapacityFlags<T extends { productId: string }>(
+    items: T[],
+    organizationId: string,
+  ): Promise<(T & { countsTowardKitchenCapacity: boolean })[]> {
+    const uniqueProductIds = [...new Set(items.map((item) => item.productId))];
+    const products = await Promise.all(
+      uniqueProductIds.map((productId) =>
+        this.productsService.findOne(productId, organizationId).catch(() => null),
+      ),
+    );
+    const flagByProductId = new Map(
+      uniqueProductIds.map((productId, index) => [
+        productId,
+        products[index]?.category?.countsTowardKitchenCapacity ?? true,
+      ]),
+    );
+    return items.map((item) => ({
+      ...item,
+      countsTowardKitchenCapacity: flagByProductId.get(item.productId) ?? true,
+    }));
+  }
+
+  async create(dto: CreateOrderDto, user: CurrentUserContext) {
     const { organizationId, id, organizationRole } = user;
+    const items = await this.resolveKitchenCapacityFlags(dto.items, organizationId);
     return rpcSend(this.client, ORDER_PATTERNS.CREATE, {
       ...dto,
+      items,
       organizationId,
       userId: organizationRole === OrganizationRole.STAFF ? undefined : id,
     });
@@ -29,6 +62,10 @@ export class OrdersService {
 
   createPosOrder(dto: CreatePosOrderDto, organizationId: string) {
     return rpcSend(this.client, ORDER_PATTERNS.CREATE_POS, { ...dto, organizationId });
+  }
+
+  getAvailableSlots(dto: GetAvailableSlotsDto, organizationId: string) {
+    return rpcSend(this.client, ORDER_PATTERNS.AVAILABLE_SLOTS, { ...dto, organizationId });
   }
 
   findAll(paginationDto: OrdersPaginationDto, organizationId: string) {
@@ -50,8 +87,13 @@ export class OrdersService {
     });
   }
 
-  addItem(orderId: string, item: CreateOrderItemDto, organizationId: string) {
-    return rpcSend(this.client, ORDER_PATTERNS.ADD_ITEM, { orderId, organizationId, item });
+  async addItem(orderId: string, item: CreateOrderItemDto, organizationId: string) {
+    const [resolvedItem] = await this.resolveKitchenCapacityFlags([item], organizationId);
+    return rpcSend(this.client, ORDER_PATTERNS.ADD_ITEM, {
+      orderId,
+      organizationId,
+      item: resolvedItem,
+    });
   }
 
   removeItem(orderId: string, itemId: string, organizationId: string) {

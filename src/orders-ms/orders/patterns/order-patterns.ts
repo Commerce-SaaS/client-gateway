@@ -12,4 +12,7 @@ export const ORDER_PATTERNS = {
     // Kitchen item-status transitions
     SEND_TO_KITCHEN: "order.send_to_kitchen",
     MARK_ITEM_PREPARED: "order.mark_item_prepared",
+
+    // Scheduled orders
+    AVAILABLE_SLOTS: "order.available_slots",
 } as const;

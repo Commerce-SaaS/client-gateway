@@ -83,4 +83,13 @@ export class CreateCategoryDto {
   @ValidateNested()
   @Type(() => CategoryUiDto)
   ui?: CategoryUiDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether items in this category count toward a scheduled order\'s per-slot kitchen capacity. Set to false for drinks, pre-prepared, or display-case items. Defaults to true.',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  countsTowardKitchenCapacity?: boolean;
 }
