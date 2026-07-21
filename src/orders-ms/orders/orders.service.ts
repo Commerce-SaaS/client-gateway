@@ -23,35 +23,43 @@ export class OrdersService {
     private readonly productsService: ProductsService,
   ) {}
 
-  // Resolves each item's countsTowardKitchenCapacity snapshot from its
-  // product's category before the order is forwarded to orders-ms (which has
-  // no dependency on product-ms). Defaults to true (conservative) when a
-  // product/category can't be resolved.
-  private async resolveKitchenCapacityFlags<T extends { productId: string }>(
+  // Resolves each item's product-category snapshot (countsTowardKitchenCapacity,
+  // categoryId, categoryName) before the order is forwarded to orders-ms
+  // (which has no dependency on product-ms). countsTowardKitchenCapacity
+  // defaults to true (conservative) when a product/category can't be
+  // resolved; categoryId/categoryName are left undefined in that case.
+  private async resolveProductSnapshotFields<T extends { productId: string }>(
     items: T[],
     organizationId: string,
-  ): Promise<(T & { countsTowardKitchenCapacity: boolean })[]> {
+  ): Promise<
+    (T & { countsTowardKitchenCapacity: boolean; categoryId?: string; categoryName?: string })[]
+  > {
     const uniqueProductIds = [...new Set(items.map((item) => item.productId))];
     const products = await Promise.all(
       uniqueProductIds.map((productId) =>
         this.productsService.findOne(productId, organizationId).catch(() => null),
       ),
     );
-    const flagByProductId = new Map(
+    const snapshotByProductId = new Map(
       uniqueProductIds.map((productId, index) => [
         productId,
-        products[index]?.category?.countsTowardKitchenCapacity ?? true,
+        {
+          countsTowardKitchenCapacity:
+            products[index]?.category?.countsTowardKitchenCapacity ?? true,
+          categoryId: products[index]?.category?.id,
+          categoryName: products[index]?.category?.name,
+        },
       ]),
     );
     return items.map((item) => ({
       ...item,
-      countsTowardKitchenCapacity: flagByProductId.get(item.productId) ?? true,
+      ...(snapshotByProductId.get(item.productId) ?? { countsTowardKitchenCapacity: true }),
     }));
   }
 
   async create(dto: CreateOrderDto, user: CurrentUserContext) {
     const { organizationId, id, organizationRole } = user;
-    const items = await this.resolveKitchenCapacityFlags(dto.items, organizationId);
+    const items = await this.resolveProductSnapshotFields(dto.items, organizationId);
     return rpcSend(this.client, ORDER_PATTERNS.CREATE, {
       ...dto,
       items,
@@ -88,7 +96,7 @@ export class OrdersService {
   }
 
   async addItem(orderId: string, item: CreateOrderItemDto, organizationId: string) {
-    const [resolvedItem] = await this.resolveKitchenCapacityFlags([item], organizationId);
+    const [resolvedItem] = await this.resolveProductSnapshotFields([item], organizationId);
     return rpcSend(this.client, ORDER_PATTERNS.ADD_ITEM, {
       orderId,
       organizationId,

@@ -4,6 +4,7 @@ import { WebhooksService } from './webhooks.service';
 import { Request, Response } from 'express';
 import { envs } from 'src/config';
 import { SkipThrottle } from '@nestjs/throttler';
+import { WebhookOrigin } from './enums/webhook-origin.enum';
 
 @ApiExcludeController()
 @SkipThrottle()
@@ -17,6 +18,7 @@ export class WebhooksController {
       req,
       res,
       envs.stripeWebhookSecret,
+      WebhookOrigin.PLATFORM,
     );
   }
 
@@ -26,6 +28,7 @@ export class WebhooksController {
       req,
       res,
       envs.stripeConnectWebhookSecret,
+      WebhookOrigin.CONNECT,
     );
   }
 }

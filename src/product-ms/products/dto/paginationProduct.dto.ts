@@ -1,6 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsOptional, IsString, Min } from 'class-validator';
+import { ProductAvailability } from 'src/common/enums/product-availability.enum';
+
+export const PRODUCT_SORT_FIELDS = ['name', 'price', 'stock', 'createdAt'] as const;
+export type ProductSortField = (typeof PRODUCT_SORT_FIELDS)[number];
 
 export class PaginationProductDto {
   @ApiPropertyOptional({
@@ -65,4 +69,55 @@ export class PaginationProductDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter products by availability',
+    enum: ProductAvailability,
+    example: ProductAvailability.AVAILABLE,
+  })
+  @IsEnum(ProductAvailability)
+  @IsOptional()
+  availability?: ProductAvailability;
+
+  @ApiPropertyOptional({
+    description: 'Filter products by active status',
+    example: true,
+    type: Boolean,
+  })
+  @Transform(({ value }) =>
+    value === undefined ? undefined : String(value).toLowerCase() === 'true',
+  )
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Return only soft-deleted products, excluding active ones',
+    example: true,
+    type: Boolean,
+  })
+  @Transform(({ value }) =>
+    value === undefined ? undefined : String(value).toLowerCase() === 'true',
+  )
+  @IsBoolean()
+  @IsOptional()
+  onlyDeleted?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Field to sort products by',
+    enum: PRODUCT_SORT_FIELDS,
+    example: 'name',
+  })
+  @IsIn(PRODUCT_SORT_FIELDS)
+  @IsOptional()
+  sortBy?: ProductSortField;
+
+  @ApiPropertyOptional({
+    description: 'Sort direction',
+    enum: ['ASC', 'DESC'],
+    example: 'ASC',
+  })
+  @IsIn(['ASC', 'DESC'])
+  @IsOptional()
+  sortOrder?: 'ASC' | 'DESC';
 }

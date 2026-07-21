@@ -4,7 +4,6 @@ import 'dotenv/config';
 const envSchema = z
   .object({
     PORT: z.coerce.number().default(4000),
-    FRONT_URL: z.string().url(),
     JWT_SECRET_ACCESS: z.string(),
     RABBITMQ_URL: z
       .string()
@@ -40,7 +39,6 @@ if (!parsedEnv.success) {
 
 export const envs = {
   port: parsedEnv.data.PORT,
-  frontUrl: parsedEnv.data.FRONT_URL,
   accessTokensecret: parsedEnv.data.JWT_SECRET_ACCESS,
   rabbitmqUrl: parsedEnv.data.RABBITMQ_URL,
   rabbitmqQueue: parsedEnv.data.RABBITMQ_QUEUE,

@@ -27,12 +27,14 @@ import { ProductsModule } from './product-ms/products/products.module';
 import { OrdersModule } from './orders-ms/orders/orders.module';
 import { TablesModule } from './orders-ms/tables/tables.module';
 import { SectorsModule } from './orders-ms/sectors/sectors.module';
+import { CashSessionsModule } from './orders-ms/cash-sessions/cash-sessions.module';
 import { SaaSUserModule } from './auth-ms/saas-auth/saas-user.module';
 import { CustomerModule } from './auth-ms/customer-auth/customer.module';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 import { StripeModule } from './payments-ms/stripe-connect/stripe.module';
 import { CustomersModule } from './auth-ms/customers/customers.module';
 import { PaymentMethodsModule } from './payments-ms/payment-methods/payment-methods.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({
@@ -99,9 +101,11 @@ import { APP_GUARD } from '@nestjs/core';
     OrdersModule,
     TablesModule,
     SectorsModule,
+    CashSessionsModule,
     StripeModule,
     CustomersModule,
     PaymentMethodsModule,
+    AnalyticsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard },]
 })

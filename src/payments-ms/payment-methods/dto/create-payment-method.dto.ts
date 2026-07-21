@@ -49,6 +49,16 @@ export class CreatePaymentMethodDto {
   isDefault?: boolean;
 
   @ApiPropertyOptional({
+    description:
+      'Marks this method as "cash" for cash-session (ticket Z) reporting — used to compute the expected cash amount when closing a cash session',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isCash?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Display order in the POS payment method selector',
     example: 1,
     minimum: 0,

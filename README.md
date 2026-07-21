@@ -1,307 +1,373 @@
-# 🧩 Client Gateway Microservice
+# 🌐 Client Gateway
 
-The Client Gateway is a production-ready API Gateway microservice built with NestJS for a multi-tenant e-commerce SaaS platform called Binou. It serves as the single entry point for all client requests, handling authentication, authorization, and business logic coordination across multiple backend microservices. The service supports dual authentication contexts (SaaS platform users and end customers) with role-based access control at both platform and organization levels.
+> NestJS API Gateway responsible for exposing the public HTTP API of the Commerce App Launcher platform and orchestrating communication between frontend clients and backend microservices through RabbitMQ.
 
-## 🏗️ Architecture
+---
 
-The service follows a layered architecture with clear domain boundaries:
+# 📌 Purpose
 
-- **Controllers Layer**: HTTP endpoints with Swagger documentation
-- **Services Layer**: Business logic and RabbitMQ RPC calls
-- **Common Layer**: Shared utilities, guards, decorators, and middleware
-- **Transports Layer**: RabbitMQ and Redis providers
+`client-gateway` is the **single HTTP entry point** for the platform.
 
-It implements Domain-Driven Design with separate domains for SaaS users, customers, organizations, products, orders, payments, and media. Multi-tenant isolation is achieved through tenant middleware that resolves organization IDs from headers or domain names.
+It receives requests from:
 
-```mermaid
-graph TD
-    A[HTTP Client] --> B[Client Gateway]
-    B --> C{Auth Guards}
-    C --> D[Platform Roles]
-    C --> E[Organization Roles]
-    B --> F[Tenant Middleware]
-    F --> G[Organization Resolution]
-    B --> H[RabbitMQ RPC]
-    H --> I[Auth MS]
-    H --> J[Organization MS]
-    H --> K[Product MS]
-    H --> L[Orders MS]
-    H --> M[Payments MS]
-    H --> N[Media MS]
-    B --> O[Redis Sessions]
-    B --> P[Stripe Integration]
+- 🏢 SaaS dashboard users
+- 👤 End customers
+- 🛒 Storefront clients
+
+The gateway is responsible for:
+
+- HTTP request handling
+- Authentication and authorization
+- Tenant resolution
+- Request validation
+- Rate limiting
+- API documentation
+- Stripe webhook processing
+- Communication with backend microservices
+
+Backend services are accessed exclusively through **RabbitMQ RPC messaging**.
+
+---
+
+# ✨ Main Responsibilities
+
+## Authentication
+
+- JWT validation
+- Session validation
+- Role-based authorization
+- Organization membership validation
+- SaaS/customer audience separation
+
+## Multi-Tenancy
+
+- Resolve organization from domain
+- Resolve organization from headers
+- Cache tenant information using Redis
+
+## API Gateway
+
+- Aggregate microservice responses
+- Transform external API requests into internal messages
+- Handle errors from downstream services
+
+## Payments
+
+- Stripe API integration
+- Stripe Checkout
+- Stripe Connect
+- Webhook signature verification
+
+---
+
+# 🏗️ Architecture
+
+```
+                         Clients
+                            │
+                            │ HTTP / REST
+                            ▼
+
+              ┌─────────────────────────┐
+              │     Client Gateway      │
+              │                         │
+              │       NestJS API        │
+              │                         │
+              └──────────┬──────────────┘
+                         │
+                         │ RabbitMQ RPC
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+        ▼                ▼                ▼
+
+    auth-ms       products-ms       orders-ms
+
+        │                │                │
+
+        ▼                ▼                ▼
+
+ organization-ms   payments-ms     media-ms
 ```
 
-## ⚙️ Tech Stack
+---
 
-| Category | Technology | Version |
-|----------|-----------|---------|
-| **Runtime** | Node.js | ^22.19.11 |
-| **Framework** | NestJS | ^11.0.1 |
-| **Language** | TypeScript | ^5.7.3 |
-| **Validation** | class-validator, class-transformer | ^0.14.2, ^0.5.1 |
-| **Schema Validation** | Zod | ^3.25.76 |
-| **JWT** | @nestjs/jwt | ^11.0.0 |
-| **Message Queue** | amqplib, amqp-connection-manager | ^0.10.9, ^4.1.14 |
-| **Cache** | ioredis | ^5.8.0 |
-| **Payments** | stripe | ^20.3.1 |
-| **Testing** | Jest | ^29.7.0 |
-| **API Docs** | @nestjs/swagger | ^11.2.5 |
+# 🛠️ Tech Stack
 
-## 📁 Project Structure
+| Technology | Purpose |
+|---|---|
+| NestJS 11 | API framework |
+| TypeScript 5.7 | Programming language |
+| RabbitMQ | Microservice communication |
+| `@nestjs/microservices` | RMQ transport |
+| PostgreSQL | Managed by downstream services |
+| Redis | Tenant/session cache |
+| JWT | Authentication |
+| Stripe SDK | Payments |
+| Helmet | Security headers |
+| Throttler | Rate limiting |
+| Swagger | API documentation |
+| Zod | Environment validation |
+| Jest + Supertest | Testing |
 
-```
-src/
-├── app.module.ts                 # Root module importing all features
-├── main.ts                       # Application bootstrap
-├── common/                       # Shared utilities and cross-cutting concerns
-│   ├── decorators/               # Custom decorators for auth and swagger
-│   ├── guards/                   # Authentication and authorization guards
-│   ├── middleware/               # Tenant resolution middleware
-│   ├── enums/                    # Platform and organization roles
-│   ├── exceptions/               # RPC error handling filter
-│   ├── interfaces/               # Type definitions and contracts
-│   ├── services/                 # Base CRUD service
-│   └── dto/                      # Shared DTOs
-├── config/                       # Environment configuration and service names
-├── transports/                   # RabbitMQ module
-├── redis/                        # Redis provider
-├── auth-ms/                      # Authentication gateway
-│   ├── saas-auth/                # SaaS user authentication
-│   └── customer-auth/            # Customer authentication
-├── organization-ms/              # Organization management
-├── product-ms/                   # Product catalog management
-├── orders-ms/                    # Order processing
-├── payments-ms/                  # Payment and subscription handling
-└── media-ms/                     # File upload management
-```
+---
 
-## 🔌 Environment Variables
+# 📦 Installation
 
-All environment variables are validated using Zod schema:
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `PORT` | number | 4000 | Server port |
-| `FRONT_URL` | string | - | Frontend URL for Stripe redirects |
-| `JWT_SECRET_ACCESS` | string | - | JWT secret for token signing |
-| `RABBITMQ_URL` | string | - | RabbitMQ connection URL |
-| `STRIPE_WEBHOOK_SECRET` | string | - | Stripe platform webhook secret |
-| `STRIPE_CONNECT_WEBHOOK_SECRET` | string | - | Stripe Connect webhook secret |
-| `STRIPE_SECRET` | string | - | Stripe API secret key |
-| `RABBITMQ_QUEUE` | string | - | Primary RabbitMQ queue |
-| `RABBITMQ_QUEUE_EVENTS_PAYMENTS` | string | - | Payment events queue |
-| `RMQ_EVENTS_QUEUE_ORGANIZATION` | string | - | Organization events queue |
-| `REDIS_HOST` | string | - | Redis server hostname |
-| `REDIS_PORT` | number | 6379 | Redis server port |
-
-## 🚀 Installation & Running
-
-### Prerequisites
-- Node.js ^22.19.11
-- RabbitMQ server
-- Redis server
-- Stripe account
-
-### Installation
 ```bash
 npm install
 ```
 
-### Development
+Create environment file:
+
+```bash
+cp .env.example .env
+```
+
+Fill required values before running.
+
+---
+
+# ▶️ Running Locally
+
+## Development
+
 ```bash
 npm run start:dev
 ```
 
-### Production
+## Debug
+
+```bash
+npm run start:debug
+```
+
+## Production
+
 ```bash
 npm run build
+
 npm run start:prod
 ```
 
-### Docker
+---
+
+# 🐳 Docker
+
+Two Dockerfiles are available.
+
+---
+
+## Development image
+
+File:
+
+```
+dockerfile
+```
+
+Features:
+
+```
+node base image
+npm install
+EXPOSE 4000
+```
+
+No CMD is defined.
+
+The container command is expected to be provided externally.
+
+---
+
+## Production image
+
+File:
+
+```
+dockerfile.prod
+```
+
+Features:
+
+✅ Multi-stage build  
+✅ Production dependencies only  
+✅ Non-root Node user  
+✅ Optimized image  
+
+Runs:
+
+```dockerfile
+CMD ["node", "dist/main.js"]
+```
+
+Build:
+
 ```bash
-docker build -t client-gateway .
+docker build -f dockerfile.prod -t client-gateway .
+```
+
+Run:
+
+```bash
 docker run -p 4000:4000 client-gateway
 ```
 
-## 📡 API Endpoints
+---
 
-### Authentication - SaaS Users
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/saas/users/register` | - | Register new SaaS user |
-| POST | `/saas/users/login` | - | Login SaaS user |
-| POST | `/saas/users/logout` | AuthSessionGuard | Logout and invalidate session |
-| POST | `/saas/users/logout-all` | AuthSessionGuard | Logout all sessions |
-| POST | `/saas/users/refresh` | - | Refresh access token |
-| POST | `/saas/users/forgot-password` | - | Request password reset |
-| POST | `/saas/users/reset-password` | - | Reset password with token |
-| POST | `/saas/users/google-auth` | - | Google OAuth login |
-| GET | `/saas/users/me` | AuthSessionGuard | Get profile |
-| PATCH | `/saas/users/me` | AuthSessionGuard | Update profile |
-| PATCH | `/saas/users/me/password` | AuthSessionGuard | Change password |
-| PATCH | `/saas/users/me/deactivate` | AuthSessionGuard | Deactivate account |
-| PATCH | `/saas/users/me/reactivate` | AuthSessionGuard | Reactivate account |
+# 🌐 HTTP API
 
-### Authentication - Customer Users
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/customer/register` | - | Register new customer |
-| POST | `/customer/login` | - | Login customer |
-| POST | `/customer/logout` | AuthSessionGuard | Logout |
-| POST | `/customer/logout-all` | AuthSessionGuard | Logout all sessions |
-| POST | `/customer/refresh` | - | Refresh token |
-| POST | `/customer/forgot-password` | - | Request password reset |
-| POST | `/customer/reset-password` | - | Reset password |
-| POST | `/customer/google-auth` | - | Google OAuth login |
-| GET | `/customer/me` | AuthSessionGuard | Get profile |
-| PATCH | `/customer/me` | AuthSessionGuard | Update profile |
-| PATCH | `/customer/me/password` | AuthSessionGuard | Change password |
+Unlike the internal microservices, the gateway exposes an HTTP API.
 
-### Organization Management
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/organization` | PlatformAuth(STAFF) | Create organization |
-| GET | `/organization/:id` | PlatformOrganizationAuth | Get organization |
-| PATCH | `/organization/:id` | PlatformOrganizationAuth | Update organization |
-| PATCH | `/organization/:id/soft-delete` | PlatformOrganizationAuth | Soft delete |
+Application bootstrap:
 
-### Products
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/products` | PlatformOrganizationAuth(STAFF) | Create product |
-| GET | `/products` | - | List products (public, paginated) |
-| GET | `/products/:id` | - | Get product details (public) |
-| PATCH | `/products/:id` | PlatformOrganizationAuth(STAFF) | Update product |
-| PATCH | `/products/:id/soft-delete` | PlatformOrganizationAuth(STAFF) | Soft delete |
-| PATCH | `/products/:id/restore` | PlatformOrganizationAuth(STAFF) | Restore |
-
-### Orders
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/orders` | PlatformOrganizationAuth | Create order |
-| GET | `/orders` | PlatformOrganizationAuth(STAFF) | List orders |
-| GET | `/orders/:id` | PlatformOrganizationAuth | Get order |
-| PATCH | `/orders/:id/cancel` | PlatformOrganizationAuth(STAFF) | Cancel order |
-
-### Payments
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/payment/create-session` | PlatformOrganizationAuth | Create Stripe payment session |
-| POST | `/subscription/create-session` | PlatformOrganizationAuth(STAFF) | Create subscription session |
-| POST | `/connect/account` | PlatformOrganizationAuth(STAFF) | Connect Stripe Express account |
-
-### Media
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/media` | PlatformOrganizationAuth(STAFF) | Upload file |
-| DELETE | `/media/:id` | PlatformOrganizationAuth(STAFF) | Delete file |
-
-### Webhooks
-| Method | Route | Guards | Description |
-|--------|-------|--------|-------------|
-| POST | `/webhooks/platform` | - | Stripe platform webhook |
-| POST | `/webhooks/connect` | - | Stripe Connect webhook |
-
-## 🔐 Security
-
-### Authentication Flow
-1. User login creates JWT token with unique session ID (JTI)
-2. Session stored in Redis with key `session:{jti}`
-3. `AuthSessionGuard` validates JWT signature and Redis session existence
-
-### Authorization Layers
-- **Platform Level**: Validates platform roles (STAFF/CUSTOMER) using `PlatformAuth` decorator
-- **Organization Level**: Validates organization roles using `PlatformOrganizationAuth` decorator
-- **Multi-Tenant Isolation**: Tenant middleware resolves organization ID from headers or domain names
-
-### Guards Chain
 ```
-AuthSessionGuard → PlatformRolesGuard → OrganizationGuard → OrganizationRolesGuard
+src/main.ts
 ```
 
-### JWT Structure
-```typescript
-interface JwtData {
-  sub: string;              // User ID
-  jti: string;              // Session ID
-  platformRole: PlatformRolesEnum;
-  organizationId?: string;
-  organizationRole?: OrganizationRole;
-}
+HTTP server:
+
+```
+Express + NestJS
 ```
 
-### Additional Security
-- Global validation pipe with whitelist enforcement
-- CORS enabled with credentials
-- Cookie-based refresh tokens
-- Stripe webhook signature validation
+Default port:
 
-## 🧠 Core Logic
+```env
+PORT=4000
+```
 
-### Order Creation
-1. Validates user permissions (STAFF or CUSTOMER)
-2. Sends RPC call to orders microservice with organization context
-3. Backend handles price calculation and inventory validation
+---
 
-### Payment Processing
-1. Verifies organization has connected Stripe account
-2. Creates Stripe checkout session with organization-specific account
-3. Handles webhook events for payment status updates
+# 🧪 Testing
 
-### Multi-Tenant Routing
-1. Tenant middleware extracts organization ID from:
-   - `x-organization-id` header
-   - Domain hostname lookup in organization_domains
-2. All operations scoped to resolved organization
-
-### CRUD Operations
-- Base CRUD service uses RabbitMQ RPC patterns
-- All operations include organizationId for tenant isolation
-- Soft delete/restore pattern implemented across entities
-
-## 🔄 Integrations
-
-### Backend Microservices (RabbitMQ)
-- **AUTH_SERVICE**: User authentication and profiles
-- **ORGANIZATION_SERVICE**: Organization CRUD and domain mapping
-- **PRODUCTS_SERVICE**: Product catalog management
-- **ORDERS_SERVICE**: Order processing and status tracking
-- **PAYMENT_SERVICE**: Payment processing
-- **MEDIA_SERVICE**: File upload handling
-
-### External Services
-- **Redis**: Session storage and validation
-- **Stripe**: Payment processing and account management
-- **Google OAuth**: Social authentication
-
-### Event-Driven Architecture
-- Stripe webhooks emit events to RabbitMQ for async processing
-- Organization events handled via dedicated queues
-
-## 🧪 Testing
-
-The service includes comprehensive unit tests for controllers and services using Jest.
+Available scripts:
 
 ```bash
-npm run test              # Run unit tests
-npm run test:watch       # Run in watch mode
-npm run test:cov         # Run with coverage report
-npm run test:debug       # Debug mode
+npm run test
 ```
 
-## 📌 Additional Notes
+```bash
+npm run test:watch
+```
 
-- **Multi-Tenant SaaS**: Supports both platform staff and tenant customers
-- **Soft Delete Pattern**: All entities support soft delete and restore operations
-- **Swagger Documentation**: API docs available at `/api` endpoint
-- **Error Handling**: RPC exceptions transformed to HTTP responses
-- **Domain-Driven Design**: Clear separation between business domains
-- **Production Ready**: Includes Docker support, environment validation, and comprehensive security
+```bash
+npm run test:cov
+```
 
-### Limitations
-- Stripe Connect country hardcoded to 'FR' (marked as TODO)
-- Some endpoints are placeholders (e.g., GET `/payment/:id`)
-- No rate limiting configured
-- Minimal logging implementation
+```bash
+npm run test:debug
+```
+
+```bash
+npm run test:e2e
+```
+
+---
+
+## Current status
+
+Unit tests exist:
+
+```
+src/**/*.spec.ts
+```
+
+E2E tests:
+
+```
+❌ No test directory
+❌ No jest-e2e.json
+```
+
+`npm run test:e2e` currently requires missing configuration.
+
+---
+
+# 🔐 Environment Variables
+
+Validated with:
+
+```
+src/config/envs.ts
+```
+
+The application will fail during startup if required variables are missing.
+
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | ❌ | HTTP server port |
+| `JWT_SECRET_ACCESS` | ✅ | JWT verification secret |
+| `RABBITMQ_URL` | ✅ | RabbitMQ connection |
+| `RABBITMQ_QUEUE` | ⚠️ | Declared but unused |
+| `RABBITMQ_QUEUE_EVENTS_PAYMENTS` | ✅ | Payment events queue |
+| `RMQ_EVENTS_QUEUE_ORGANIZATION` | ✅ | Organization events queue |
+| `STRIPE_WEBHOOK_SECRET` | ✅ | Platform webhook secret |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | ✅ | Connect webhook secret |
+| `STRIPE_SECRET` | ✅ | Stripe API key |
+| `REDIS_HOST` | ✅ | Redis hostname |
+| `REDIS_PORT` | ❌ | Redis port |
+| `REDIS_PASS` | ✅ | Redis password |
+
+---
+
+# Example `.env`
+
+```env
+PORT=4000
+
+JWT_SECRET_ACCESS=my-secret
+
+RABBITMQ_URL=amqp://localhost:5672
+
+RABBITMQ_QUEUE=client_gateway_queue
+
+RABBITMQ_QUEUE_EVENTS_PAYMENTS=payments_events
+
+RMQ_EVENTS_QUEUE_ORGANIZATION=organization_events
+
+STRIPE_SECRET=sk_test_xxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+STRIPE_CONNECT_WEBHOOK_SECRET=whsec_xxxxx
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASS=password
+```
+
+---
+
+# 🐇 RabbitMQ Communication
+
+The gateway communicates with backend services using:
+
+```
+Transport.RMQ
+```
+
+All services are accessed through:
+
+```
+ClientProxy
+```
+
+No direct HTTP communication exists between services.
+
+---
+
+# 🔌 Connected Microservices
+
+Defined in:
+
+```
+src/config/services.ts
+```
+
+| Client Token | Service |
+|---|---|
+| `AUTH_SERVICE` | auth-ms |
+| `ORGANIZATION_SERVICE` | organization-ms |
+| `PRODUCTS_SERVICE` | products-ms |
+| `ORDERS_SERVICE` | orders-ms |
+| `PAYMENT_SERVICE` | payments-ms |
+| `MEDIA_SERVICE` | media-ms |

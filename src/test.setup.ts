@@ -1,6 +1,5 @@
 // Minimal env-var stubs required so that config/envs.ts does not throw
 // during module loading in unit tests. No real services are needed.
-process.env.FRONT_URL = 'http://localhost:3000';
 process.env.JWT_SECRET_ACCESS = 'test-jwt-secret';
 process.env.RABBITMQ_URL = 'amqp://localhost:5672';
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test';

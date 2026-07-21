@@ -131,6 +131,14 @@ export class CreateProductDto {
   availability?: ProductAvailability;
 
   @ApiPropertyOptional({
+    description: 'Whether the product is active and sellable',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
     description: 'Description of the product',
     example: 'Classic pizza with tomato, mozzarella and basil',
   })
