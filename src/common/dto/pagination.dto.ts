@@ -1,16 +1,44 @@
-import { Type } from 'class-transformer';
-import { IsOptional, IsPositive } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString, Min } from 'class-validator';
 
 export class PaginationDto {
-
-  @IsPositive()
+  @ApiPropertyOptional({
+    description: 'Number of records to skip (pagination offset)',
+    example: 0,
+    minimum: 0,
+    type: Number,
+  })
   @IsOptional()
+  @Min(0)
   @Type(() => Number)
-  page?: number = 1;
+  offset?: number;
 
-  @IsPositive()
+  @ApiPropertyOptional({
+    description: 'Maximum number of records to return',
+    example: 20,
+    minimum: 0,
+    type: Number,
+  })
   @IsOptional()
+  @Min(0)
   @Type(() => Number)
-  limit?: number = 10;
+  limit?: number;
 
+  @ApiPropertyOptional({
+    description: 'Free text search by product name or description',
+    example: 'pizza',
+  })
+  @IsString()
+  @IsOptional()
+  search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Include soft-deleted products',
+    example: false,
+    type: Boolean,
+  })
+  @Transform(({ value }) => String(value).toLowerCase() === 'true')
+  @IsOptional()
+  withDeleted?: boolean;
 }
