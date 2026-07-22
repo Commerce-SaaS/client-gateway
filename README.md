@@ -1,301 +1,180 @@
-# 🌐 Client Gateway
+<h1 align="center">🌐 Client Gateway</h1>
 
-> NestJS API Gateway responsible for exposing the public HTTP API of the Commerce App Launcher platform and orchestrating communication between frontend clients and backend microservices through RabbitMQ.
+<p align="center">
+  <b>NestJS API Gateway</b> — the public HTTP API of the <b>Commerce App Launcher</b> platform.<br/>
+  Orchestrates communication between frontend clients and backend microservices over RabbitMQ.
+</p>
 
----
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/RabbitMQ-RPC-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white" />
+  <img src="https://img.shields.io/badge/Stripe-Webhooks-635BFF?style=for-the-badge&logo=stripe&logoColor=white" />
+</p>
 
-# 📌 Purpose
+<p align="center">
+  <img src="https://img.shields.io/badge/Role-Single%20HTTP%20entry%20point-6C47FF?style=flat-square" />
+  <img src="https://img.shields.io/badge/Port-4000-4169E1?style=flat-square" />
+  <img src="https://img.shields.io/badge/Redis-tenant%20%2F%20session%20cache-DC382D?style=flat-square&logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/Swagger-API%20docs-85EA2D?style=flat-square&logo=swagger&logoColor=black" />
+</p>
 
-`client-gateway` is the **single HTTP entry point** for the platform.
+<br/>
 
-It receives requests from:
+## 📌 Purpose
 
-- 🏢 SaaS dashboard users
-- 👤 End customers
-- 🛒 Storefront clients
+`client-gateway` is the **single HTTP entry point** for the platform. It receives requests from 🏢 SaaS dashboard users, 👤 end customers, and 🛒 storefront clients.
 
-The gateway is responsible for:
+> [!IMPORTANT]
+> Backend services are accessed **exclusively** through RabbitMQ RPC messaging — no direct HTTP communication exists between services. The gateway handles HTTP requests, authentication & authorization, tenant resolution, request validation, rate limiting, API documentation, Stripe webhook processing, and downstream microservice communication.
 
-- HTTP request handling
-- Authentication and authorization
-- Tenant resolution
-- Request validation
-- Rate limiting
-- API documentation
-- Stripe webhook processing
-- Communication with backend microservices
+<br/>
 
-Backend services are accessed exclusively through **RabbitMQ RPC messaging**.
+## ✨ Main Responsibilities
 
----
+| Area | Responsibilities |
+|---|---|
+| 🔐 **Authentication** | JWT validation · session validation · role-based authorization · organization membership validation · SaaS/customer audience separation |
+| 🏢 **Multi-Tenancy** | Resolve organization from domain · resolve organization from headers · cache tenant info in Redis |
+| 🧭 **API Gateway** | Aggregate microservice responses · transform external API requests into internal messages · handle downstream errors |
+| 💳 **Payments** | Stripe API integration · Stripe Checkout · Stripe Connect · webhook signature verification |
 
-# ✨ Main Responsibilities
+<br/>
 
-## Authentication
+## 🏗️ Architecture
 
-- JWT validation
-- Session validation
-- Role-based authorization
-- Organization membership validation
-- SaaS/customer audience separation
+```mermaid
+flowchart TB
+    subgraph Clients["Clients"]
+        direction LR
+        SAAS["🏢 SaaS dashboard"]
+        CUST["👤 End customers"]
+        STORE["🛒 Storefront"]
+    end
 
-## Multi-Tenancy
+    Clients -->|"HTTP / REST · :4000"| GW["🌐 client-gateway<br/><i>NestJS — single HTTP entry point</i>"]
 
-- Resolve organization from domain
-- Resolve organization from headers
-- Cache tenant information using Redis
+    GW -. "RabbitMQ RPC (ClientProxy)" .-> AUTH["🔐 auth-ms"]
+    GW -. "RPC" .-> ORG["🏢 organization-ms"]
+    GW -. "RPC" .-> PROD["📦 products-ms"]
+    GW -. "RPC" .-> ORD["🧾 orders-ms"]
+    GW -. "RPC" .-> PAY["💳 payments-ms"]
+    GW -. "RPC" .-> MED["🖼️ media-ms"]
 
-## API Gateway
-
-- Aggregate microservice responses
-- Transform external API requests into internal messages
-- Handle errors from downstream services
-
-## Payments
-
-- Stripe API integration
-- Stripe Checkout
-- Stripe Connect
-- Webhook signature verification
-
----
-
-# 🏗️ Architecture
-
-```
-                         Clients
-                            │
-                            │ HTTP / REST
-                            ▼
-
-              ┌─────────────────────────┐
-              │     Client Gateway      │
-              │                         │
-              │       NestJS API        │
-              │                         │
-              └──────────┬──────────────┘
-                         │
-                         │ RabbitMQ RPC
-                         │
-        ┌────────────────┼────────────────┐
-        │                │                │
-        ▼                ▼                ▼
-
-    auth-ms       products-ms       orders-ms
-
-        │                │                │
-
-        ▼                ▼                ▼
-
- organization-ms   payments-ms     media-ms
+    GW -. "tenant / session cache" .-> REDIS[("⚡ Redis")]
+    GW -. "Checkout · Connect · webhooks" .-> STRIPE[["💳 Stripe"]]
 ```
 
----
+<br/>
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
 
 | Technology | Purpose |
 |---|---|
-| NestJS 11 | API framework |
-| TypeScript 5.7 | Programming language |
-| RabbitMQ | Microservice communication |
+| **NestJS 11** | API framework |
+| **TypeScript 5.7** | Programming language |
+| **RabbitMQ** | Microservice communication |
 | `@nestjs/microservices` | RMQ transport |
-| PostgreSQL | Managed by downstream services |
-| Redis | Tenant/session cache |
-| JWT | Authentication |
-| Stripe SDK | Payments |
-| Helmet | Security headers |
-| Throttler | Rate limiting |
-| Swagger | API documentation |
-| Zod | Environment validation |
-| Jest + Supertest | Testing |
+| **PostgreSQL** | Managed by downstream services |
+| **Redis** | Tenant / session cache |
+| **JWT** | Authentication |
+| **Stripe SDK** | Payments |
+| **Helmet** | Security headers |
+| **Throttler** | Rate limiting |
+| **Swagger** | API documentation |
+| **Zod** | Environment validation |
+| **Jest + Supertest** | Testing |
 
----
+<br/>
 
-# 📦 Installation
+## 📦 Installation & Running
 
 ```bash
 npm install
+cp .env.example .env        # fill required values before running
 ```
 
-Create environment file:
+| Mode | Command |
+|---|---|
+| 🧑‍💻 Development | `npm run start:dev` |
+| 🐞 Debug | `npm run start:debug` |
+| 🚀 Production | `npm run build && npm run start:prod` |
 
-```bash
-cp .env.example .env
-```
+The application bootstraps from `src/main.ts` (Express + NestJS), listening on `PORT=4000` by default.
 
-Fill required values before running.
+<br/>
 
----
-
-# ▶️ Running Locally
-
-## Development
-
-```bash
-npm run start:dev
-```
-
-## Debug
-
-```bash
-npm run start:debug
-```
-
-## Production
-
-```bash
-npm run build
-
-npm run start:prod
-```
-
----
-
-# 🐳 Docker
+## 🐳 Docker
 
 Two Dockerfiles are available.
 
----
+<details>
+<summary><b>🧑‍💻 Development image — <code>dockerfile</code></b></summary>
 
-## Development image
+<br/>
 
-File:
+- Node base image
+- `npm install`
+- `EXPOSE 4000`
 
-```
-dockerfile
-```
+> [!NOTE]
+> No `CMD` is defined — the container command is expected to be provided externally (e.g. from `docker-compose.yml`).
 
-Features:
+</details>
 
-```
-node base image
-npm install
-EXPOSE 4000
-```
+<details>
+<summary><b>🚀 Production image — <code>dockerfile.prod</code></b></summary>
 
-No CMD is defined.
+<br/>
 
-The container command is expected to be provided externally.
-
----
-
-## Production image
-
-File:
-
-```
-dockerfile.prod
-```
-
-Features:
-
-✅ Multi-stage build  
-✅ Production dependencies only  
-✅ Non-root Node user  
-✅ Optimized image  
-
-Runs:
+✅ Multi-stage build &nbsp;·&nbsp; ✅ Production dependencies only &nbsp;·&nbsp; ✅ Non-root Node user &nbsp;·&nbsp; ✅ Optimized image
 
 ```dockerfile
 CMD ["node", "dist/main.js"]
 ```
 
-Build:
-
 ```bash
 docker build -f dockerfile.prod -t client-gateway .
-```
-
-Run:
-
-```bash
 docker run -p 4000:4000 client-gateway
 ```
 
----
+</details>
 
-# 🌐 HTTP API
+<br/>
 
-Unlike the internal microservices, the gateway exposes an HTTP API.
+## 🌐 HTTP API
 
-Application bootstrap:
+Unlike the internal microservices, the gateway exposes a real HTTP API.
 
-```
-src/main.ts
-```
+| | |
+|---|---|
+| **Bootstrap** | `src/main.ts` |
+| **HTTP server** | Express + NestJS |
+| **Default port** | `4000` |
 
-HTTP server:
+<br/>
 
-```
-Express + NestJS
-```
-
-Default port:
-
-```env
-PORT=4000
-```
-
----
-
-# 🧪 Testing
-
-Available scripts:
+## 🧪 Testing
 
 ```bash
-npm run test
-```
-
-```bash
+npm run test          # unit tests
 npm run test:watch
-```
-
-```bash
 npm run test:cov
-```
-
-```bash
 npm run test:debug
-```
-
-```bash
 npm run test:e2e
 ```
 
----
+> [!WARNING]
+> **Current status:** unit tests exist (`src/**/*.spec.ts`), but E2E is **not runnable** — there is no `test/` directory and no `jest-e2e.json`, so `npm run test:e2e` requires missing configuration.
 
-## Current status
+<br/>
 
-Unit tests exist:
+## 🔐 Environment Variables
 
-```
-src/**/*.spec.ts
-```
-
-E2E tests:
-
-```
-❌ No test directory
-❌ No jest-e2e.json
-```
-
-`npm run test:e2e` currently requires missing configuration.
-
----
-
-# 🔐 Environment Variables
-
-Validated with:
-
-```
-src/config/envs.ts
-```
-
-The application will fail during startup if required variables are missing.
+Validated with `src/config/envs.ts` — **the application fails at startup if required variables are missing.**
 
 | Variable | Required | Description |
-|---|---|---|
+|---|:---:|---|
 | `PORT` | ❌ | HTTP server port |
 | `JWT_SECRET_ACCESS` | ✅ | JWT verification secret |
 | `RABBITMQ_URL` | ✅ | RabbitMQ connection |
@@ -309,9 +188,10 @@ The application will fail during startup if required variables are missing.
 | `REDIS_PORT` | ❌ | Redis port |
 | `REDIS_PASS` | ✅ | Redis password |
 
----
+<details>
+<summary><b>📄 Example <code>.env</code></b></summary>
 
-# Example `.env`
+<br/>
 
 ```env
 PORT=4000
@@ -319,11 +199,8 @@ PORT=4000
 JWT_SECRET_ACCESS=my-secret
 
 RABBITMQ_URL=amqp://localhost:5672
-
 RABBITMQ_QUEUE=client_gateway_queue
-
 RABBITMQ_QUEUE_EVENTS_PAYMENTS=payments_events
-
 RMQ_EVENTS_QUEUE_ORGANIZATION=organization_events
 
 STRIPE_SECRET=sk_test_xxxxx
@@ -335,39 +212,25 @@ REDIS_PORT=6379
 REDIS_PASS=password
 ```
 
----
+</details>
 
-# 🐇 RabbitMQ Communication
+<br/>
 
-The gateway communicates with backend services using:
+## 🐇 RabbitMQ Communication
 
-```
-Transport.RMQ
-```
+The gateway talks to backend services via `Transport.RMQ`, using a `ClientProxy` per service. **No direct HTTP communication exists between services.**
 
-All services are accessed through:
-
-```
-ClientProxy
-```
-
-No direct HTTP communication exists between services.
-
----
-
-# 🔌 Connected Microservices
-
-Defined in:
-
-```
-src/config/services.ts
-```
+Connected microservices are defined in `src/config/services.ts`:
 
 | Client Token | Service |
 |---|---|
-| `AUTH_SERVICE` | auth-ms |
-| `ORGANIZATION_SERVICE` | organization-ms |
-| `PRODUCTS_SERVICE` | products-ms |
-| `ORDERS_SERVICE` | orders-ms |
-| `PAYMENT_SERVICE` | payments-ms |
-| `MEDIA_SERVICE` | media-ms |
+| `AUTH_SERVICE` | 🔐 auth-ms |
+| `ORGANIZATION_SERVICE` | 🏢 organization-ms |
+| `PRODUCTS_SERVICE` | 📦 products-ms |
+| `ORDERS_SERVICE` | 🧾 orders-ms |
+| `PAYMENT_SERVICE` | 💳 payments-ms |
+| `MEDIA_SERVICE` | 🖼️ media-ms |
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=80&section=footer" />
+</p>
